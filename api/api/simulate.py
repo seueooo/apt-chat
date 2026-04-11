@@ -12,8 +12,8 @@ class SimulateRequest(BaseModel):
     savings: int = Field(ge=0, le=50000)
     loan_years: int = Field(ge=10, le=40)
     region: str = "서울 전체"
-    interest_rate: float = 3.9
-    dsr_limit: float = 40
+    interest_rate: float = Field(default=3.9, ge=0, le=30)
+    dsr_limit: float = Field(default=40, gt=0, le=100)
 
 
 @router.post("/api/simulate")
@@ -26,14 +26,18 @@ def simulate(req: SimulateRequest):
         dsr_limit=req.dsr_limit,
     )
 
-    # 아파트별 최신 거래 1건만 추출
-    region_filter = ""
-    params: tuple = (loan["total_budget"],)
+    # 조건 리스트 방식 — f-string에 동적 SQL 삽입 방지
+    conditions = ["s.is_canceled = FALSE", "s.price <= %s"]
+    params_list = [loan["total_budget"]]
 
     if req.region != "서울 전체":
-        region_filter = "AND r.sigungu = %s"
-        params = (loan["total_budget"], req.region)
+        conditions.append("r.sigungu = %s")
+        params_list.append(req.region)
 
+    where_clause = " AND ".join(conditions)
+    params = tuple(params_list)
+
+    # 아파트별 최신 거래 1건만 추출 + 같은 CTE에서 count
     sql = f"""
     WITH latest AS (
         SELECT DISTINCT ON (a.apartment_id)
@@ -47,35 +51,25 @@ def simulate(req: SimulateRequest):
         FROM sales_transactions s
         JOIN apartments a USING (apartment_id)
         JOIN regions r USING (region_id)
-        WHERE s.is_canceled = FALSE
-          AND s.price <= %s
-          {region_filter}
+        WHERE {where_clause}
         ORDER BY a.apartment_id, s.deal_date DESC
     )
-    SELECT * FROM latest ORDER BY deal_date DESC LIMIT 200
+    SELECT *, COUNT(*) OVER () AS total_count
+    FROM latest
+    ORDER BY deal_date DESC
+    LIMIT 200
     """
 
     columns, rows = execute_query(sql, params, statement_timeout_ms=10000)
 
     apartments = []
+    affordable_count = 0
     for row in rows:
         apt = dict(zip(columns, row))
+        affordable_count = apt.pop("total_count")
         apt["deal_date"] = str(apt["deal_date"])
         apt["margin"] = loan["total_budget"] - apt["price"]
         apartments.append(apt)
-
-    # affordable_count: LIMIT 전 아파트 수
-    count_sql = f"""
-    SELECT COUNT(DISTINCT a.apartment_id)
-    FROM sales_transactions s
-    JOIN apartments a USING (apartment_id)
-    JOIN regions r USING (region_id)
-    WHERE s.is_canceled = FALSE
-      AND s.price <= %s
-      {region_filter}
-    """
-    _, count_rows = execute_query(count_sql, params, statement_timeout_ms=10000)
-    affordable_count = count_rows[0][0]
 
     return {
         **loan,
