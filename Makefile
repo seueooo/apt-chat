@@ -26,7 +26,8 @@ install:
 	cd api && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
 setup: install
-	cp -n .env.example .env || true
+	cp -n api/.env.example api/.env || true
+	cp -n web/.env.example web/.env || true
 	pnpm lefthook install
 
 clean:
