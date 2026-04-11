@@ -30,6 +30,6 @@
     }
   },
   "files": {
-    "includes": ["apps/web/**/*.{ts,tsx,json}"]
+    "includes": ["web/**/*.{ts,tsx,json}"]
   }
 }
