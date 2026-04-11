@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Background Surfaces */
+  --color-canvas: #08090a;
+  --color-panel: #0f1011;
+  --color-surface: #191a1b;
+  --color-elevated: #28282c;
+
+  /* Translucent Controls */
+  --color-control: rgba(255, 255, 255, 0.02);
+  --color-control-hover: rgba(255, 255, 255, 0.04);
+  --color-control-active: rgba(255, 255, 255, 0.05);
+
+  /* Text */
+  --color-primary: #f7f8f8;
+  --color-secondary: #d0d6e0;
+  --color-tertiary: #8a8f98;
+  --color-quaternary: #62666d;
+
+  /* Brand & Accent */
+  --color-brand: #5e6ad2;
+  --color-accent: #7170ff;
+  --color-accent-hover: #828fff;
+  --color-brand-muted: rgba(94, 106, 210, 0.1);
+  --color-brand-border: rgba(94, 106, 210, 0.3);
+
+  /* Status */
+  --color-success: #27a644;
+  --color-success-alt: #10b981;
+  --color-warning: #f59e0b;
+
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-solid: #23252a;
+
+  /* Overlay */
+  --color-overlay: rgba(0, 0, 0, 0.85);
+
+  /* Typography */
+  --font-sans:
+    "Inter Variable", "SF Pro Display", -apple-system, system-ui, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --font-mono: "Berkeley Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 510;
+  --font-weight-semibold: 590;
+
+  /* Border Radius */
+  --radius-micro: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 22px;
+  --radius-pill: 9999px;
+}
+
+body {
+  font-feature-settings: "cv01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-canvas);
+  color: var(--color-primary);
+}
