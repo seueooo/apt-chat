@@ -1,13 +1,16 @@
 .PHONY: dev dev-web dev-api test lint format install setup clean docker-up docker-down
 
 dev:
-	pnpm dev
+	@trap 'kill 0' EXIT; \
+	cd api && .venv/bin/uvicorn main:app --reload --port 8000 & \
+	pnpm --filter web dev & \
+	wait
 
 dev-web:
 	pnpm dev:web
 
 dev-api:
-	pnpm dev:api
+	cd api && .venv/bin/uvicorn main:app --reload --port 8000
 
 test:
 	pnpm test

@@ -39,10 +39,8 @@
   --color-overlay: rgba(0, 0, 0, 0.85);
 
   /* Typography */
-  --font-sans:
-    "Inter Variable", "SF Pro Display", -apple-system, system-ui, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --font-mono: "Berkeley Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Font Weights */
   --font-weight-light: 300;
