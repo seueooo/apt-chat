@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.simulate import router as simulate_router
 from config import CORS_ORIGINS
 from db.connection import close_pool
 
@@ -22,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(simulate_router)
 
 
 @app.get("/api/health")
