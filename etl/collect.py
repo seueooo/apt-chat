@@ -10,40 +10,13 @@ import requests
 import xmltodict
 from dotenv import load_dotenv
 
+from constants import SEOUL_DISTRICTS
+
 load_dotenv(Path(__file__).resolve().parent.parent / "api" / ".env")
 
 API_KEY = os.getenv("PUBLIC_DATA_API_KEY", "")
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"
 RAW_DIR = Path(__file__).resolve().parent / "raw"
-
-# 서울 25개 구 법정동코드 (앞 5자리)
-SEOUL_DISTRICTS = {
-    "11110": "종로구",
-    "11140": "중구",
-    "11170": "용산구",
-    "11200": "성동구",
-    "11215": "광진구",
-    "11230": "동대문구",
-    "11260": "중랑구",
-    "11290": "성북구",
-    "11305": "강북구",
-    "11320": "도봉구",
-    "11350": "노원구",
-    "11380": "은평구",
-    "11410": "서대문구",
-    "11440": "마포구",
-    "11470": "양천구",
-    "11500": "강서구",
-    "11530": "구로구",
-    "11545": "금천구",
-    "11560": "영등포구",
-    "11590": "동작구",
-    "11620": "관악구",
-    "11650": "서초구",
-    "11680": "강남구",
-    "11710": "송파구",
-    "11740": "강동구",
-}
 
 
 def generate_year_months(start: str = "202301") -> list[str]:
@@ -82,7 +55,7 @@ def fetch_page(sigungu_code: str, deal_ymd: str, page: int = 1, rows: int = 1000
     items = body.get("items", {})
 
     if total == 0 or items is None:
-        return []
+        return [], 0
 
     item_list = items.get("item", [])
     if isinstance(item_list, dict):

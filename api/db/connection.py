@@ -23,9 +23,10 @@ def _get_pool() -> ThreadedConnectionPool:
 
 def close_pool() -> None:
     global _pool
-    if _pool is not None:
-        _pool.closeall()
-        _pool = None
+    with _pool_lock:
+        if _pool is not None:
+            _pool.closeall()
+            _pool = None
 
 
 @contextmanager
@@ -44,7 +45,12 @@ def execute_query(
     params: tuple | None = None,
     statement_timeout_ms: int = DEFAULT_STATEMENT_TIMEOUT_MS,
 ) -> tuple[list[str], list[tuple]]:
-    """Execute a read query with statement timeout. Returns (columns, rows)."""
+    """Execute a read query with statement timeout. Returns (columns, rows).
+
+    Note: SET LOCAL requires a transaction block. psycopg2 defaults to
+    autocommit=False (implicit transaction), so SET LOCAL + query share
+    the same transaction. Do NOT set autocommit=True on pool connections.
+    """
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SET LOCAL statement_timeout = %s", (statement_timeout_ms,))
