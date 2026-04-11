@@ -5,21 +5,32 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import psycopg2
-from psycopg2.extras import execute_values
+import psycopg
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parent.parent / "api" / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 DB_URL = os.getenv("SUPABASE_DB_URL", "")
 CLEAN_CSV = Path(__file__).resolve().parent / "clean" / "sales_all.csv"
 BATCH_SIZE = 1000
 
+INSERT_REGIONS_SQL = """
+INSERT INTO regions (sido, sigungu, dong, sigungu_code)
+VALUES (%s, %s, %s, %s)
+ON CONFLICT (sido, sigungu, dong) DO NOTHING
+"""
+
+INSERT_APARTMENTS_SQL = """
+INSERT INTO apartments (apartment_name, region_id, jibun, road_name, build_year)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (apartment_name, region_id, jibun) DO NOTHING
+"""
+
 INSERT_SALES_SQL = """
 INSERT INTO sales_transactions
     (apartment_id, source_id, deal_date, deal_year, deal_month,
      exclusive_area, floor, price, price_per_pyeong, is_canceled, reg_date)
-VALUES %s
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (source_id) DO NOTHING
 """
 
@@ -55,105 +66,84 @@ def load():
     df = df.where(pd.notnull(df), None)
     print(f"적재 대상: {len(df)}건")
 
-    conn = psycopg2.connect(DB_URL)
-    try:
-        cur = conn.cursor()
+    with psycopg.connect(DB_URL) as conn:
+        with conn.cursor() as cur:
+            # 1. regions 적재
+            regions = df[["sido", "sigungu", "dong", "sigungu_code"]].drop_duplicates()
+            region_values = [
+                (r.sido, r.sigungu, r.dong or "", r.sigungu_code)
+                for r in regions.itertuples()
+            ]
+            cur.executemany(INSERT_REGIONS_SQL, region_values)
+            conn.commit()
+            print(f"  regions: {len(region_values)}건 시도")
 
-        # 1. regions 적재
-        regions = df[["sido", "sigungu", "dong", "sigungu_code"]].drop_duplicates()
-        region_values = [
-            (r.sido, r.sigungu, r.dong or "", r.sigungu_code)
-            for r in regions.itertuples()
-        ]
-        execute_values(
-            cur,
-            """
-            INSERT INTO regions (sido, sigungu, dong, sigungu_code)
-            VALUES %s
-            ON CONFLICT (sido, sigungu, dong) DO NOTHING
-            """,
-            region_values,
-        )
-        conn.commit()
-        print(f"  regions: {len(region_values)}건 시도")
+            # region_id 매핑 조회
+            cur.execute("SELECT region_id, sido, sigungu, dong FROM regions")
+            region_map = {(r[1], r[2], r[3]): r[0] for r in cur.fetchall()}
 
-        # region_id 매핑 조회
-        cur.execute("SELECT region_id, sido, sigungu, dong FROM regions")
-        region_map = {(r[1], r[2], r[3]): r[0] for r in cur.fetchall()}
+            # 2. apartments 적재
+            apts = df[["apartment_name", "sido", "sigungu", "dong", "jibun", "build_year"]].drop_duplicates(
+                subset=["apartment_name", "sido", "sigungu", "dong", "jibun"]
+            )
+            apt_values = []
+            for r in apts.itertuples():
+                rid = region_map.get((r.sido, r.sigungu, r.dong or ""))
+                if rid is None:
+                    continue
+                apt_values.append((
+                    r.apartment_name,
+                    rid,
+                    r.jibun or "",
+                    None,
+                    _safe_int(r.build_year),
+                ))
 
-        # 2. apartments 적재
-        apts = df[["apartment_name", "sido", "sigungu", "dong", "jibun", "build_year"]].drop_duplicates(
-            subset=["apartment_name", "sido", "sigungu", "dong", "jibun"]
-        )
-        apt_values = []
-        for r in apts.itertuples():
-            rid = region_map.get((r.sido, r.sigungu, r.dong or ""))
-            if rid is None:
-                continue
-            apt_values.append((
-                r.apartment_name,
-                rid,
-                r.jibun or "",
-                None,  # road_name
-                _safe_int(r.build_year),
-            ))
+            cur.executemany(INSERT_APARTMENTS_SQL, apt_values)
+            conn.commit()
+            print(f"  apartments: {len(apt_values)}건 시도")
 
-        execute_values(
-            cur,
-            """
-            INSERT INTO apartments (apartment_name, region_id, jibun, road_name, build_year)
-            VALUES %s
-            ON CONFLICT (apartment_name, region_id, jibun) DO NOTHING
-            """,
-            apt_values,
-        )
-        conn.commit()
-        print(f"  apartments: {len(apt_values)}건 시도")
+            # apartment_id 매핑 조회
+            cur.execute("SELECT apartment_id, apartment_name, region_id, jibun FROM apartments")
+            apt_map = {(r[1], r[2], r[3]): r[0] for r in cur.fetchall()}
 
-        # apartment_id 매핑 조회
-        cur.execute("SELECT apartment_id, apartment_name, region_id, jibun FROM apartments")
-        apt_map = {(r[1], r[2], r[3]): r[0] for r in cur.fetchall()}
+            # 3. sales_transactions 배치 적재
+            inserted = 0
+            batch = []
+            for row in df.itertuples():
+                rid = region_map.get((row.sido, row.sigungu, getattr(row, "dong", None) or ""))
+                if rid is None:
+                    continue
+                aid = apt_map.get((row.apartment_name, rid, getattr(row, "jibun", None) or ""))
+                if aid is None:
+                    continue
 
-        # 3. sales_transactions 배치 적재 (itertuples for performance)
-        inserted = 0
-        batch = []
-        for row in df.itertuples():
-            rid = region_map.get((row.sido, row.sigungu, getattr(row, "dong", None) or ""))
-            if rid is None:
-                continue
-            aid = apt_map.get((row.apartment_name, rid, getattr(row, "jibun", None) or ""))
-            if aid is None:
-                continue
+                batch.append((
+                    aid,
+                    make_source_id(row),
+                    row.deal_date,
+                    int(row.deal_year),
+                    int(row.deal_month),
+                    float(row.exclusive_area),
+                    _safe_int(row.floor),
+                    int(row.price),
+                    _safe_int(row.price_per_pyeong),
+                    bool(row.is_canceled),
+                    row.reg_date if row.reg_date is not None else None,
+                ))
 
-            batch.append((
-                aid,
-                make_source_id(row),
-                row.deal_date,
-                int(row.deal_year),
-                int(row.deal_month),
-                float(row.exclusive_area),
-                _safe_int(row.floor),
-                int(row.price),
-                _safe_int(row.price_per_pyeong),
-                bool(row.is_canceled),
-                row.reg_date if row.reg_date is not None else None,
-            ))
+                if len(batch) >= BATCH_SIZE:
+                    cur.executemany(INSERT_SALES_SQL, batch)
+                    conn.commit()
+                    inserted += len(batch)
+                    batch = []
 
-            if len(batch) >= BATCH_SIZE:
-                execute_values(cur, INSERT_SALES_SQL, batch)
+            if batch:
+                cur.executemany(INSERT_SALES_SQL, batch)
                 conn.commit()
                 inserted += len(batch)
-                batch = []
 
-        if batch:
-            execute_values(cur, INSERT_SALES_SQL, batch)
-            conn.commit()
-            inserted += len(batch)
-
-        print(f"  sales_transactions: {inserted}건 시도")
-        cur.close()
-    finally:
-        conn.close()
+            print(f"  sales_transactions: {inserted}건 시도")
 
     print("적재 완료")
 

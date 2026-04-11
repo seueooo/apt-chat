@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from constants import SEOUL_DISTRICTS
 
-load_dotenv(Path(__file__).resolve().parent.parent / "api" / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 API_KEY = os.getenv("PUBLIC_DATA_API_KEY", "")
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"

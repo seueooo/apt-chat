@@ -3,10 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.simulate import router as simulate_router
-from api.stats import router as stats_router
-from config import CORS_ORIGINS
+from config import settings
 from db.connection import close_pool
+from routers.simulate import router as simulate_router
+from routers.stats import router as stats_router
 
 
 @asynccontextmanager
@@ -19,7 +19,7 @@ app = FastAPI(title="AptChat API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
