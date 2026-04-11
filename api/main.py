@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.simulate import router as simulate_router
+from api.stats import router as stats_router
 from config import CORS_ORIGINS
 from db.connection import close_pool
 
@@ -26,6 +27,7 @@ app.add_middleware(
 
 
 app.include_router(simulate_router)
+app.include_router(stats_router)
 
 
 @app.get("/api/health")
