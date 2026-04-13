@@ -8,14 +8,14 @@
     - 반환 테이블 수 최대 4개 (현재 허용 테이블이 3개이므로 실질적으로 최대 3개)
     - 각 테이블은 primary key + 질문 매칭 컬럼만 포함 (전체 컬럼 반환 금지)
     - 매칭 실패 시 안전한 기본값 반환
-    - SCHEMA_CATALOG는 etl/schema.sql과 1:1 일치
+    - SCHEMA_CATALOG는 apps/etl/schema.sql과 1:1 일치
 """
 
 import re
 
 # --- Schema Catalog ------------------------------------------------------------
 # 허용 테이블 3개의 컬럼 → 한국어 설명.
-# 실제 etl/schema.sql의 컬럼명과 1:1 일치해야 한다.
+# 실제 apps/etl/schema.sql의 컬럼명과 1:1 일치해야 한다.
 SCHEMA_CATALOG: dict[str, dict[str, str]] = {
     "sales_transactions": {
         "transaction_id": "거래 PK",

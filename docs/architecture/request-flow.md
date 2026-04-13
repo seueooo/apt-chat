@@ -2,7 +2,7 @@
 
 ## Overview
 
-브라우저는 Next.js 16의 App Router 프록시(`web/app/api/[...path]/route.ts`)를 통해 FastAPI 백엔드와 통신한다. Anthropic SDK 호출과 Supabase(PostgreSQL) 연결은 모두 FastAPI 안에서만 일어나며, 클라이언트 번들에는 API 키가 포함되지 않는다. 시뮬레이터는 순수 계산 + DB 조회 경로, 챗봇은 캐시 → 2단계 Claude → sqlglot 검증 → DB 실행 경로를 따른다.
+브라우저는 Next.js 16의 App Router 프록시(`apps/web/app/api/[...path]/route.ts`)를 통해 FastAPI 백엔드와 통신한다. Anthropic SDK 호출과 Supabase(PostgreSQL) 연결은 모두 FastAPI 안에서만 일어나며, 클라이언트 번들에는 API 키가 포함되지 않는다. 시뮬레이터는 순수 계산 + DB 조회 경로, 챗봇은 캐시 → 2단계 Claude → sqlglot 검증 → DB 실행 경로를 따른다.
 
 ## 전체 아키텍처
 
@@ -182,5 +182,5 @@ flowchart TD
 - 재시도 루프 금지 — `validate_sql` 실패도 Claude API 오류도 즉시 HTTP 예외로 전파된다.
 - 캐시 히트 시 LLM 호출 0회, DB 호출 0회. `query_cache`는 TTLCache(1000, 86400s) + `threading.Lock`.
 - Intent 매칭 시 Sonnet 호출 생략 — Haiku 1회(extract_intent) + Haiku 1회(summarize)로 종결. 템플릿 SQL은 `intent_mapper.intent_to_sql`이 코드 상수로 반환.
-- 서버 세션당 3회 제한(`rate_limit.check_and_increment`) + 클라이언트 `web/lib/session.ts` 3회 제한으로 이중 보호. 캐시 히트도 카운트된다.
-- Anthropic API 키는 `server/.env`에만 존재하고 프록시는 해당 헤더를 포워딩하지 않는다.
+- 서버 세션당 3회 제한(`rate_limit.check_and_increment`) + 클라이언트 `apps/web/lib/session.ts` 3회 제한으로 이중 보호. 캐시 히트도 카운트된다.
+- Anthropic API 키는 `apps/server/.env`에만 존재하고 프록시는 해당 헤더를 포워딩하지 않는다.

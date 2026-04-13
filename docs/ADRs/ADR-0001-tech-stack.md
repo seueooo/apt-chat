@@ -17,7 +17,7 @@ Accepted — 2026-04 (MVP 시점)
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind v4, TanStack Query 5, Recharts 3.
 - **Database**: Supabase (PostgreSQL). 테이블 3개 — `regions`, `apartments`, `sales_transactions`.
 - **툴체인**: ruff + pytest (BE), biome + tsc (FE), lefthook pre-commit.
-- Next.js Route Handler(`web/app/api/[...path]/route.ts`)를 FastAPI 프록시로 사용한다. 클라이언트는 Anthropic을 직접 호출하지 않는다.
+- Next.js Route Handler(`apps/web/app/api/[...path]/route.ts`)를 FastAPI 프록시로 사용한다. 클라이언트는 Anthropic을 직접 호출하지 않는다.
 
 ## Consequences
 

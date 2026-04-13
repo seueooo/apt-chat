@@ -15,8 +15,8 @@ node_modules/
 out/
 
 # ETL data
-etl/raw/
-etl/clean/
+apps/etl/raw/
+apps/etl/clean/
 
 # Superpowers (plan docs)
 docs/superpowers/

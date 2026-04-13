@@ -2,14 +2,14 @@ pre-commit:
   parallel: true
   commands:
     biome:
-      glob: "web/**/*.{ts,tsx,json}"
+      glob: "apps/web/**/*.{ts,tsx,json}"
       run: pnpm biome check --write {staged_files}
       stage_fixed: true
     ruff-check:
-      root: "server/"
+      root: "apps/server/"
       glob: "*.py"
       run: ruff check {staged_files}
     ruff-format:
-      root: "server/"
+      root: "apps/server/"
       glob: "*.py"
       run: ruff format --check {staged_files}

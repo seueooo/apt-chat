@@ -2,8 +2,8 @@
 # All paths below are relative to this compose file's directory (deploy/),
 # so `context: ..` points to the monorepo root.
 #
-# Prerequisite: `server/.env` must exist. Copy the template first:
-#   cp server/.env.example server/.env
+# Prerequisite: `apps/server/.env` must exist. Copy the template first:
+#   cp apps/server/.env.example apps/server/.env
 # and fill in SUPABASE_DB_URL / ANTHROPIC_API_KEY / PUBLIC_DATA_API_KEY.
 #
 #   docker compose -f deploy/docker-compose.yml build
@@ -16,7 +16,7 @@ services:
       dockerfile: deploy/Dockerfile.server
     image: apt-chat-server:local
     env_file:
-      - ../server/.env
+      - ../apps/server/.env
     ports:
       - "8000:8000"
     restart: unless-stopped

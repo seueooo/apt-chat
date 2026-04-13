@@ -3,12 +3,12 @@
 # Build command:
 #   docker compose -f deploy/docker-compose.yml build web
 #
-# Next.js 16 with output: "standalone" in web/next.config.ts.
-# Verified standalone structure for this pnpm workspace:
-#   .next/standalone/web/server.js           <- entry
-#   .next/standalone/web/.next/               <- server chunks
-#   .next/standalone/web/node_modules/        <- web-local hoist
-#   .next/standalone/node_modules/            <- shared hoist (next, react, ...)
+# Next.js 16 with output: "standalone" in apps/web/next.config.ts.
+# Verified standalone structure for this pnpm workspace (apps/web/):
+#   .next/standalone/apps/web/server.js          <- entry
+#   .next/standalone/apps/web/.next/             <- server chunks
+#   .next/standalone/apps/web/node_modules/      <- web-local hoist
+#   .next/standalone/node_modules/               <- shared hoist (next, react, ...)
 #   (static + public must be copied manually per Next docs)
 
 ########## deps ##########
@@ -22,7 +22,7 @@ WORKDIR /repo
 
 # Workspace manifest files only, for a cache-friendly install layer.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY web/package.json ./web/package.json
+COPY apps/web/package.json ./apps/web/package.json
 
 RUN pnpm install --frozen-lockfile
 
@@ -40,11 +40,11 @@ WORKDIR /repo
 
 # Reuse node_modules from deps stage.
 COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/web/node_modules ./web/node_modules
+COPY --from=deps /repo/apps/web/node_modules ./apps/web/node_modules
 
-# Copy only what's needed for the build (avoid copying server/, etc).
+# Copy only what's needed for the build (avoid copying apps/server/, apps/etl/, etc).
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY web ./web
+COPY apps/web ./apps/web
 
 RUN pnpm --filter web build
 
@@ -62,16 +62,16 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 
 # Standalone bundle (entry + hoisted node_modules at /app root).
-COPY --from=build --chown=app:app /repo/web/.next/standalone/ ./
+COPY --from=build --chown=app:app /repo/apps/web/.next/standalone/ ./
 
 # Static assets not copied by Next automatically (per output: standalone docs).
-COPY --from=build --chown=app:app /repo/web/.next/static ./web/.next/static
-COPY --from=build --chown=app:app /repo/web/public ./web/public
+COPY --from=build --chown=app:app /repo/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build --chown=app:app /repo/apps/web/public ./apps/web/public
 
 USER app
 
 EXPOSE 3000
 
-# server.js lives inside web/ because the workspace path is preserved in standalone.
-WORKDIR /app/web
+# server.js lives inside apps/web/ because the workspace path is preserved in standalone.
+WORKDIR /app/apps/web
 CMD ["node", "server.js"]

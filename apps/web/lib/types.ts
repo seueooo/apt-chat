@@ -2,7 +2,7 @@
  * apt-chat backend API 타입 정의.
  *
  * 백엔드 FastAPI Pydantic 모델과 1:1 매칭된다. 필드 추가/변경 시 반드시
- * `server/routers/*.py` 와 함께 갱신해야 한다.
+ * `apps/server/routers/*.py` 와 함께 갱신해야 한다.
  */
 
 // --- /api/simulate -----------------------------------------------------------

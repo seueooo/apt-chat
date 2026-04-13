@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Build context: monorepo root (..)
 # Build command:
-#   docker compose -f deploy/docker-compose.yml build api
+#   docker compose -f deploy/docker-compose.yml build server
 
 FROM python:3.12-slim AS runtime
 
@@ -13,13 +13,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install only runtime deps. psycopg[binary] ships wheels, so no build-essential needed.
-COPY server/requirements.txt /app/requirements.txt
+COPY apps/server/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy source. Flattening server/ contents into /app so `from config import settings`
+# Copy source. Flattening apps/server/ contents into /app so `from config import settings`
 # and `uvicorn main:app` work the same as local dev (pyproject.toml pythonpath = ["."]).
 # .env is intentionally NOT copied — runtime env is injected via docker-compose.
-COPY server /app
+COPY apps/server /app
 
 EXPOSE 8000
 

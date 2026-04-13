@@ -20,7 +20,7 @@ def test_catalog_contains_only_allowed_tables():
 
 
 def test_catalog_has_real_columns():
-    """카탈로그 컬럼은 실제 etl/schema.sql 스키마의 컬럼명과 일치."""
+    """카탈로그 컬럼은 실제 apps/etl/schema.sql 스키마의 컬럼명과 일치."""
     sales_cols = set(SCHEMA_CATALOG["sales_transactions"].keys())
     # 핵심 컬럼
     assert {"deal_date", "price", "is_canceled", "exclusive_area"}.issubset(sales_cols)
