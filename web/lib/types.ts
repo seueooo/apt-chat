@@ -44,9 +44,15 @@ export type ChatMessage = {
 	content: string;
 };
 
+/**
+ * Chat 호출 시 프런트가 백엔드에 전달하는 임의 컨텍스트.
+ * (예: 시뮬레이터의 지역/예산 등 — 백엔드는 free-form dict 로 처리)
+ */
+export type ChatContext = Record<string, unknown>;
+
 export type ChatRequest = {
 	messages: ChatMessage[];
-	context?: Record<string, unknown> | null;
+	context?: ChatContext | null;
 	summarize?: boolean;
 };
 

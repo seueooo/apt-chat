@@ -10,6 +10,8 @@
  */
 
 import type {
+	ChatContext,
+	ChatMessage,
 	ChatRequest,
 	ChatResponse,
 	Region,
@@ -120,8 +122,30 @@ export const api = {
 		return post<SimulateResponse>("/api/simulate", req);
 	},
 
-	chat(req: ChatRequest, sessionId: string): Promise<ChatResponse> {
-		return post<ChatResponse>("/api/chat", req, { "X-Session-Id": sessionId });
+	/**
+	 * 챗봇 호출. 세션 ID 는 `X-Session-Id` 헤더로 프록시를 통해 백엔드까지 전달된다.
+	 *
+	 * @param params.sessionId  `getOrCreateSessionId()` 결과. 빈 문자열이면 헤더 생략.
+	 * @param params.messages   대화 히스토리 (역할별 turn 전체).
+	 * @param params.context    선택적 컨텍스트 (시뮬레이터 상태 등). 기본 null.
+	 * @param params.summarize  컨텍스트 요약 모드. 기본 false.
+	 */
+	chat(params: {
+		sessionId: string;
+		messages: ChatMessage[];
+		context?: ChatContext | null;
+		summarize?: boolean;
+	}): Promise<ChatResponse> {
+		const body: ChatRequest = {
+			messages: params.messages,
+			context: params.context ?? null,
+			summarize: params.summarize ?? false,
+		};
+		const headers: Record<string, string> = {};
+		if (params.sessionId) {
+			headers["X-Session-Id"] = params.sessionId;
+		}
+		return post<ChatResponse>("/api/chat", body, headers);
 	},
 
 	async regions(): Promise<Region[]> {
