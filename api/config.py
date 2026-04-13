@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     supabase_db_url: str
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-20250514"
+    anthropic_model_cheap: str = "claude-haiku-4-5-20251001"
+    anthropic_model_good: str = "claude-sonnet-4-6"
     cors_origins: str = "http://localhost:3000"
 
     @property
