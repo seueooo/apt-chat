@@ -56,6 +56,10 @@
   --radius-xl: 12px;
   --radius-2xl: 22px;
   --radius-pill: 9999px;
+
+  /* Shadows / Elevation (DESIGN.md §3) */
+  --shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 2px var(--color-brand), 0 0 0 4px var(--color-brand-muted);
 }
 
 body {
@@ -63,4 +67,84 @@ body {
   -webkit-font-smoothing: antialiased;
   background-color: var(--color-canvas);
   color: var(--color-primary);
+}
+
+/* Simulator range input — native `<input type="range">` customization.
+   Tailwind v4 유틸리티는 `::-webkit-slider-thumb` 같은 벤더 pseudo-element를
+   타겟할 수 없어 plain CSS로 정의한다. 색/반지름/그림자는 전부 @theme 토큰 참조. */
+.simulator-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.simulator-range::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--color-accent) 0%,
+    var(--color-brand) var(--range-progress, 0%),
+    var(--color-control-active) var(--range-progress, 0%),
+    var(--color-control-active) 100%
+  );
+  border: 1px solid var(--color-border-subtle);
+}
+
+.simulator-range::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-control-active);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.simulator-range::-moz-range-progress {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--color-accent), var(--color-brand));
+}
+
+.simulator-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  border: 1px solid var(--color-brand-border);
+  box-shadow: var(--shadow-elevated);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.simulator-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  border: 1px solid var(--color-brand-border);
+  box-shadow: var(--shadow-elevated);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.simulator-range:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+.simulator-range:hover::-moz-range-thumb {
+  transform: scale(1.1);
+}
+
+.simulator-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--shadow-focus);
+}
+
+.simulator-range:focus-visible::-moz-range-thumb {
+  box-shadow: var(--shadow-focus);
 }
