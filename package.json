@@ -4,12 +4,12 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "cd api && source .venv/bin/activate && uvicorn main:app --reload --port 8000",
+    "dev:server": "cd server && source .venv/bin/activate && uvicorn main:app --reload --port 8000",
     "test": "pnpm -r test",
-    "test:api": "cd api && source .venv/bin/activate && pytest",
-    "lint": "pnpm --filter web lint && cd api && source .venv/bin/activate && ruff check .",
-    "format": "pnpm --filter web format && cd api && source .venv/bin/activate && ruff format .",
-    "lint:fix": "pnpm --filter web lint:fix && cd api && source .venv/bin/activate && ruff check --fix ."
+    "test:server": "cd server && source .venv/bin/activate && pytest",
+    "lint": "pnpm --filter web lint && cd server && source .venv/bin/activate && ruff check .",
+    "format": "pnpm --filter web format && cd server && source .venv/bin/activate && ruff format .",
+    "lint:fix": "pnpm --filter web lint:fix && cd server && source .venv/bin/activate && ruff check --fix ."
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",

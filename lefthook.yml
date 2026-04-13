@@ -6,10 +6,10 @@ pre-commit:
       run: pnpm biome check --write {staged_files}
       stage_fixed: true
     ruff-check:
-      root: "api/"
+      root: "server/"
       glob: "*.py"
       run: ruff check {staged_files}
     ruff-format:
-      root: "api/"
+      root: "server/"
       glob: "*.py"
       run: ruff format --check {staged_files}

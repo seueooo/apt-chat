@@ -183,4 +183,4 @@ flowchart TD
 - 캐시 히트 시 LLM 호출 0회, DB 호출 0회. `query_cache`는 TTLCache(1000, 86400s) + `threading.Lock`.
 - Intent 매칭 시 Sonnet 호출 생략 — Haiku 1회(extract_intent) + Haiku 1회(summarize)로 종결. 템플릿 SQL은 `intent_mapper.intent_to_sql`이 코드 상수로 반환.
 - 서버 세션당 3회 제한(`rate_limit.check_and_increment`) + 클라이언트 `web/lib/session.ts` 3회 제한으로 이중 보호. 캐시 히트도 카운트된다.
-- Anthropic API 키는 `api/.env`에만 존재하고 프록시는 해당 헤더를 포워딩하지 않는다.
+- Anthropic API 키는 `server/.env`에만 존재하고 프록시는 해당 헤더를 포워딩하지 않는다.

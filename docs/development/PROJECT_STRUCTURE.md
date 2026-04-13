@@ -1,6 +1,6 @@
 # Project Structure
 
-pnpm workspace 기반 모노레포. 백엔드(`api/`), 프런트엔드(`web/`), 데이터 수집(`etl/`), 문서(`docs/`)가 단일 저장소에 공존한다.
+pnpm workspace 기반 모노레포. 백엔드(`server/`), 프런트엔드(`web/`), 데이터 수집(`etl/`), 문서(`docs/`)가 단일 저장소에 공존한다.
 
 ```
 apt-chat/
@@ -13,7 +13,7 @@ apt-chat/
 ├── package.json                    # workspace 루트
 ├── pnpm-workspace.yaml             # web 워크스페이스 정의
 │
-├── api/                            # FastAPI 백엔드 (Python 3.12)
+├── server/                         # FastAPI 백엔드 (Python 3.12)
 │   ├── config.py                   # pydantic-settings Settings
 │   ├── main.py                     # FastAPI app + CORS + router include
 │   ├── pyproject.toml              # ruff 설정 등

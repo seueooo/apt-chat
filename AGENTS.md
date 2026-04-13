@@ -5,7 +5,7 @@ A monorepo with a Next.js web app, Python/FastAPI backend, and ETL pipeline.
 ## Structure
 
 - `web/` - Next.js frontend
-- `api/` - Python/FastAPI backend
+- `server/` - Python/FastAPI backend
 - `etl/` - Data pipeline
 
 ## Commands
@@ -13,7 +13,7 @@ A monorepo with a Next.js web app, Python/FastAPI backend, and ETL pipeline.
 ```bash
 pnpm dev          # Start all services
 pnpm dev:web      # Start web only
-pnpm dev:api      # Start API only
+pnpm dev:server   # Start backend only
 pnpm test         # Run all tests
 pnpm lint         # Lint all code
 pnpm lint:fix     # Fix linting issues

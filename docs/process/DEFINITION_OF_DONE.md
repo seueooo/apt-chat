@@ -7,7 +7,7 @@
 - `validate_sql`이 모든 실패 케이스에서 재시도 없이 즉시 예외를 전파하며, 회귀 테스트가 존재한다.
 - `query_cache`와 `rate_limit`은 `threading.Lock`으로 보호된다.
 - API 응답 스펙이 `web/lib/types.ts`와 1:1로 일치한다.
-- 신규 환경 변수는 `api/.env.example`과 동기화된다.
+- 신규 환경 변수는 `server/.env.example`과 동기화된다.
 
 ## Frontend
 
@@ -27,15 +27,15 @@
 
 ## Security
 
-- `ANTHROPIC_API_KEY`는 `api/.env`에만 존재한다. `web/.env`, 브라우저 번들, 프록시 `route.ts` 어디에도 포함되지 않는다.
+- `ANTHROPIC_API_KEY`는 `server/.env`에만 존재한다. `web/.env`, 브라우저 번들, 프록시 `route.ts` 어디에도 포함되지 않는다.
 - 클라이언트 → Anthropic 직접 호출 경로가 없고 Next.js 프록시 경유가 강제된다.
 - 원시 SQL에 f-string 보간을 금지하고 psycopg `%s` 파라미터 바인딩만 사용한다.
 - DB 오류 메시지는 사용자에게 타임아웃 등 일반 문구만 노출하며, 상세 예외는 서버 로그에만 남긴다.
 
 ## Operations
 
-- `make dev`로 API와 Web이 동시에 기동된다.
-- `pnpm build` (web)과 `pytest` (api)가 모두 성공한다.
+- `make dev`로 서버와 Web이 동시에 기동된다.
+- `pnpm build` (web)과 `pytest` (server)가 모두 성공한다.
 - lefthook pre-commit 훅이 ruff + biome을 자동 실행한다.
 - Task 15 Docker 이미지 빌드는 현재 미완 — 별도 태스크로 진행한다.
 - 실기기 smoke: 세션당 3회 질문 제한, 캐시 히트, 429 상태 동기화, 시뮬레이터 디바운스가 정상 동작한다.
