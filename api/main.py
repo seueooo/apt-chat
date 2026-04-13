@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from db.connection import close_pool
+from routers.chat import router as chat_router
 from routers.simulate import router as simulate_router
 from routers.stats import router as stats_router
 
@@ -28,6 +29,7 @@ app.add_middleware(
 
 app.include_router(simulate_router)
 app.include_router(stats_router)
+app.include_router(chat_router)
 
 
 @app.get("/api/health")
