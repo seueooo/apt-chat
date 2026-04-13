@@ -1,0 +1,77 @@
+# syntax=docker/dockerfile:1.7
+# Build context: monorepo root (..)
+# Build command:
+#   docker compose -f deploy/docker-compose.yml build web
+#
+# Next.js 16 with output: "standalone" in web/next.config.ts.
+# Verified standalone structure for this pnpm workspace:
+#   .next/standalone/web/server.js           <- entry
+#   .next/standalone/web/.next/               <- server chunks
+#   .next/standalone/web/node_modules/        <- web-local hoist
+#   .next/standalone/node_modules/            <- shared hoist (next, react, ...)
+#   (static + public must be copied manually per Next docs)
+
+########## deps ##########
+FROM node:20-alpine AS deps
+
+RUN apk add --no-cache libc6-compat \
+    && corepack enable \
+    && corepack prepare pnpm@9.4.0 --activate
+
+WORKDIR /repo
+
+# Workspace manifest files only, for a cache-friendly install layer.
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY web/package.json ./web/package.json
+
+RUN pnpm install --frozen-lockfile
+
+########## build ##########
+FROM node:20-alpine AS build
+
+RUN apk add --no-cache libc6-compat \
+    && corepack enable \
+    && corepack prepare pnpm@9.4.0 --activate
+
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production
+
+WORKDIR /repo
+
+# Reuse node_modules from deps stage.
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/web/node_modules ./web/node_modules
+
+# Copy only what's needed for the build (avoid copying server/, etc).
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY web ./web
+
+RUN pnpm --filter web build
+
+########## runner ##########
+FROM node:20-alpine AS runner
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0 \
+    API_URL=http://api:8000
+
+WORKDIR /app
+
+RUN addgroup -S app && adduser -S app -G app
+
+# Standalone bundle (entry + hoisted node_modules at /app root).
+COPY --from=build --chown=app:app /repo/web/.next/standalone/ ./
+
+# Static assets not copied by Next automatically (per output: standalone docs).
+COPY --from=build --chown=app:app /repo/web/.next/static ./web/.next/static
+COPY --from=build --chown=app:app /repo/web/public ./web/public
+
+USER app
+
+EXPOSE 3000
+
+# server.js lives inside web/ because the workspace path is preserved in standalone.
+WORKDIR /app/web
+CMD ["node", "server.js"]

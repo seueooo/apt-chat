@@ -1,0 +1,36 @@
+# Build + run the apt-chat stack.
+# All paths below are relative to this compose file's directory (deploy/),
+# so `context: ..` points to the monorepo root.
+#
+# Prerequisite: `server/.env` must exist. Copy the template first:
+#   cp server/.env.example server/.env
+# and fill in SUPABASE_DB_URL / ANTHROPIC_API_KEY / PUBLIC_DATA_API_KEY.
+#
+#   docker compose -f deploy/docker-compose.yml build
+#   docker compose -f deploy/docker-compose.yml up -d
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    image: apt-chat-api:local
+    env_file:
+      - ../server/.env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    image: apt-chat-web:local
+    environment:
+      API_URL: http://api:8000
+      NODE_ENV: production
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
