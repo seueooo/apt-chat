@@ -6,12 +6,18 @@ async function proxyRequest(request: NextRequest) {
 	const { pathname, search } = request.nextUrl;
 	const targetUrl = `${API_BASE}${pathname}${search}`;
 
+	const forwardHeaders: Record<string, string> = {
+		"Content-Type": "application/json",
+	};
+	const sessionId = request.headers.get("x-session-id");
+	if (sessionId) {
+		forwardHeaders["X-Session-Id"] = sessionId;
+	}
+
 	try {
 		const response = await fetch(targetUrl, {
 			method: request.method,
-			headers: {
-				"Content-Type": "application/json",
-			},
+			headers: forwardHeaders,
 			body:
 				request.method !== "GET" && request.method !== "HEAD" ? await request.text() : undefined,
 		});
