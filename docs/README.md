@@ -11,8 +11,6 @@
   - [ADR-0002 — Text-to-SQL 파이프라인](./ADRs/ADR-0002-text-to-sql.md)
 - **Development**
   - [Project Structure](./development/PROJECT_STRUCTURE.md) — 모노레포 디렉토리 트리
-- **Process**
-  - [Definition of Done](./process/DEFINITION_OF_DONE.md) — MVP 완료 기준
 
 ## 외부 참고
 
