@@ -98,10 +98,3 @@ apt-chat/
     ├── development/
     └── process/
 ```
-
-## 제외 (git 추적 안 함)
-
-- `docs/superpowers/` — 로컬 도구용 디렉토리
-- `node_modules/`, `.next/`, `web/.next/` — JS 빌드 산출물
-- `api/.venv/`, `__pycache__/` — Python 가상환경 및 캐시
-- `api/.env`, `web/.env` — 환경 변수 (각각 `.env.example` 참고)

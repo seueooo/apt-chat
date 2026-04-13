@@ -22,17 +22,7 @@ Accepted — 2026-04 (MVP 시점)
 ## Consequences
 
 **이점**
+
 - `sqlglot` AST 기반 검증으로 SQL 안전성을 결정론적으로 보장.
 - Next.js 프록시가 브라우저와 Anthropic 사이를 차단해 API 키 유출 경로가 없다.
 - Supabase PostgreSQL의 partial index, CTE, window 함수를 그대로 활용 가능.
-
-**단점 / 트레이드오프**
-- 배포 시 API + Web 두 프로세스를 기동해야 한다 (Task 15 Docker 작업에서 해결 예정, 현재 미완).
-- Next.js 16은 이전 버전 대비 breaking change가 많아 `web/AGENTS.md`에 주의 경고가 필요하다.
-- Anthropic SDK는 동기 호출 기반이므로 FastAPI에서 executor 경유가 필요하다.
-
-## Alternatives considered
-
-- **Django + DRF**: 풀스택 프레임워크지만 sqlglot + pydantic-settings 조합 상 FastAPI가 더 가볍다.
-- **Supabase Edge Functions**: Deno 런타임 제약으로 `anthropic` SDK 사용이 번거롭다.
-- **LangChain 등 LLM 프레임워크**: 비용 제어 관점에서 기각 (ADR-0002 참조).
