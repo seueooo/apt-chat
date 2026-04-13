@@ -29,3 +29,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Claude Code (local overrides)
+.claude/settings.local.json
