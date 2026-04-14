@@ -11,6 +11,7 @@
   - [ADR-0002 — Text-to-SQL 파이프라인](./ADRs/ADR-0002-text-to-sql.md)
 - **Development**
   - [Project Structure](./development/PROJECT_STRUCTURE.md) — 모노레포 디렉토리 트리
+  - [Optimization Log](./development/optimization-log.md) — 성능 최적화 트러블슈팅 기록 (문제 → 원인 → 기존/수정 방식 → 결과)
 
 ## 외부 참고
 
