@@ -9,12 +9,8 @@
  */
 
 import type { SimulateResponse } from "@/lib/types";
+import { useSimulatorSelector } from "@/stores/simulator-store";
 import { formatPrice } from "@/utils/format";
-
-type SummaryCardsProps = {
-	result: SimulateResponse | null;
-	loading: boolean;
-};
 
 type CardSpec = {
 	id: "max-loan" | "monthly" | "total";
@@ -38,7 +34,11 @@ function buildCards(result: SimulateResponse | null): CardSpec[] {
 	];
 }
 
-export function SummaryCards({ result, loading }: SummaryCardsProps) {
+export function SummaryCards() {
+	// result 객체 ref 는 fetch 후에만 변하므로 selector 가 안정적.
+	// loading 도 primitive boolean.
+	const result = useSimulatorSelector((s) => s.result);
+	const loading = useSimulatorSelector((s) => s.loading);
 	const cards = buildCards(result);
 	const isStale = loading && result !== null;
 

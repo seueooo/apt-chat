@@ -5,12 +5,19 @@
  *
  * 핵심 규칙 (Task 12):
  *
- * 1. 초기 `remainingQuestions = getMaxQuestions()` (= 3).
- * 2. `send(content)` 는 낙관적으로 카운터를 감소시키고 유저 메시지를 즉시 추가한다.
+ * 1. 초기 `remainingQuestions = MAX_QUESTIONS_PER_SESSION` (= 3).
+ * 2. `send(content, context)` 는 낙관적으로 카운터를 감소시키고 유저 메시지를 즉시 추가한다.
  * 3. 성공 시 서버 응답의 `remaining_questions` 로 **반드시** 재동기화 (서버가 진실 소스).
  * 4. 429 에러 시 카운터를 0 으로 강제 동기화 — 클라이언트가 앞서가더라도 서버가 거절한 즉시 lock.
  * 5. `remainingQuestions === 0` 이거나 mutation 진행 중이면 `send` 는 no-op (연타 방지).
  * 6. 카운터는 음수를 허용하지 않는다 (`Math.max(0, ...)`).
+ *
+ * Context 전달 방식:
+ * - 과거에는 `useChat(context)` 로 hook 파라미터로 받아 매 렌더마다 context 를 재구독했다.
+ *   이 방식은 ChatWindow 가 시뮬레이터 store 를 selector 로 구독해야 하므로, 결과가
+ *   업데이트될 때마다 ChatWindow 본체가 리렌더되는 부작용이 있었다.
+ * - 현재 방식: `send(content, context)` 시점에만 context 를 전달. ChatWindow 는 store 에서
+ *   render-time 구독 없이 `store.getSnapshot()` 으로 snapshot 만 읽어 context 를 조립.
  *
  * SSR 가드:
  * - `getOrCreateSessionId()` 는 `mutationFn` 내부에서 lazy 하게 호출된다. mutation 은
@@ -21,7 +28,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { ApiError, api } from "@/lib/api";
-import { getMaxQuestions, getOrCreateSessionId } from "@/lib/session";
+import { getOrCreateSessionId, MAX_QUESTIONS_PER_SESSION } from "@/lib/session";
 import type { ChatContext, ChatMessage, ChatResponse } from "@/lib/types";
 
 export type UserMessage = {
@@ -40,23 +47,28 @@ export type Message = UserMessage | AssistantMessage;
 export type UseChatResult = {
 	messages: Message[];
 	loading: boolean;
-	send: (content: string) => void;
+	send: (content: string, context: ChatContext | null) => void;
 	remainingQuestions: number;
 	isExhausted: boolean;
 	error: ApiError | null;
 };
 
+type SendVariables = {
+	content: string;
+	context: ChatContext | null;
+};
+
 function clampRemaining(value: number): number {
-	return Math.max(0, Math.min(getMaxQuestions(), Math.trunc(value)));
+	return Math.max(0, Math.min(MAX_QUESTIONS_PER_SESSION, Math.trunc(value)));
 }
 
-export function useChat(context?: ChatContext): UseChatResult {
+export function useChat(): UseChatResult {
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [remainingQuestions, setRemainingQuestions] = useState<number>(getMaxQuestions());
+	const [remainingQuestions, setRemainingQuestions] = useState<number>(MAX_QUESTIONS_PER_SESSION);
 	const [error, setError] = useState<ApiError | null>(null);
 
-	const mutation = useMutation<ChatResponse, Error, string>({
-		mutationFn: (content: string) => {
+	const mutation = useMutation<ChatResponse, Error, SendVariables>({
+		mutationFn: ({ content, context }: SendVariables) => {
 			// 다음 turn 의 히스토리 = 기존 messages + 새 user 메시지
 			const history: ChatMessage[] = [
 				...messages.map((m) => ({ role: m.role, content: m.content })),
@@ -66,10 +78,10 @@ export function useChat(context?: ChatContext): UseChatResult {
 			return api.chat({
 				sessionId: getOrCreateSessionId(),
 				messages: history,
-				context: context ?? null,
+				context,
 			});
 		},
-		onMutate: (content: string) => {
+		onMutate: ({ content }: SendVariables) => {
 			setError(null);
 			setMessages((prev) => [...prev, { role: "user", content }]);
 		},
@@ -94,7 +106,7 @@ export function useChat(context?: ChatContext): UseChatResult {
 	});
 
 	const send = useCallback(
-		(content: string) => {
+		(content: string, context: ChatContext | null) => {
 			const trimmed = content.trim();
 			if (!trimmed) return;
 			if (remainingQuestions === 0) return;
@@ -102,7 +114,7 @@ export function useChat(context?: ChatContext): UseChatResult {
 
 			// 낙관적 감소: UI 즉시 반영. 성공/실패 시 서버 값으로 재동기화됨.
 			setRemainingQuestions((prev) => Math.max(0, prev - 1));
-			mutation.mutate(trimmed);
+			mutation.mutate({ content, context });
 		},
 		[remainingQuestions, mutation],
 	);

@@ -3,7 +3,15 @@
 /**
  * ChatWindow — 챗봇 메인 컨테이너.
  *
- * - `useChat(context)` 훅을 통해 메시지 상태 / 낙관적 카운터 / mutation 상태를 가져온다.
+ * 중요: **시뮬레이터 store 를 구독하지 않는다.** `useSimulatorStoreRef()` 로
+ * store reference 만 받아 전송 시점에만 `getSnapshot()` 으로 최신 region/budget
+ * 을 읽는다. 덕분에 슬라이더 드래그/debounced result 업데이트 등 시뮬레이터 상태
+ * 변화에 ChatWindow 본체는 리렌더되지 않는다.
+ *
+ * 배지 UI 는 별도 atomic 컴포넌트 `ChatContextBadge` 가 selector 로 자기 slice 만
+ * 구독 → 시각적으로는 실시간 반영되면서도 ChatWindow 본체는 정지 상태 유지.
+ *
+ * - `useChat()` 훅을 통해 메시지 상태 / 낙관적 카운터 / mutation 상태를 가져온다.
  * - 메시지가 없으면 hero + SampleQuestions + ContextBadge 노출.
  * - 있으면 메시지 목록 + 입력창.
  * - 한글 IME: `e.nativeEvent.isComposing` 체크 필수.
@@ -15,19 +23,27 @@ import { ContextBadge } from "@/components/Chat/ContextBadge";
 import { AssistantMessageBubble, UserMessageBubble } from "@/components/Chat/MessageBubble";
 import { SampleQuestions } from "@/components/Chat/SampleQuestions";
 import { type Message, useChat } from "@/hooks/useChat";
-import { getMaxQuestions } from "@/lib/session";
+import { MAX_QUESTIONS_PER_SESSION } from "@/lib/session";
 import type { ChatContext } from "@/lib/types";
+import {
+	type SimulatorSnapshot,
+	useSimulatorSelector,
+	useSimulatorStoreRef,
+} from "@/stores/simulator-store";
 
-type ChatWindowProps = {
-	context?: ChatContext;
-	contextRegion?: string;
-	contextBudget?: number;
-};
+function snapshotToContext(snapshot: SimulatorSnapshot): ChatContext {
+	const totalBudget = snapshot.result?.total_budget;
+	return totalBudget != null
+		? { region: snapshot.region, total_budget: totalBudget }
+		: { region: snapshot.region };
+}
 
-const MAX_QUESTIONS = getMaxQuestions();
+export function ChatWindow() {
+	// Store reference 만 획득. useContext 기반이라 context value 가 stable 한 동안
+	// (= Provider 의 lifetime 내내) 이 컴포넌트를 리렌더 트리거에 등록하지 않는다.
+	const storeRef = useSimulatorStoreRef();
 
-export function ChatWindow({ context, contextRegion, contextBudget }: ChatWindowProps) {
-	const { messages, loading, send, remainingQuestions, isExhausted, error } = useChat(context);
+	const { messages, loading, send, remainingQuestions, isExhausted, error } = useChat();
 	const [input, setInput] = useState<string>("");
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -37,7 +53,8 @@ export function ChatWindow({ context, contextRegion, contextBudget }: ChatWindow
 		if (!canSend) return;
 		const value = input;
 		setInput("");
-		send(value);
+		// 전송 순간 snapshot 을 읽어 최신 context 조립 — 렌더 타임 구독 없이도 정확성 유지.
+		send(value, snapshotToContext(storeRef.getSnapshot()));
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -52,17 +69,13 @@ export function ChatWindow({ context, contextRegion, contextBudget }: ChatWindow
 	const handleSampleSelect = (question: string): void => {
 		if (isExhausted || loading) return;
 		setInput("");
-		send(question);
+		send(question, snapshotToContext(storeRef.getSnapshot()));
 		textareaRef.current?.focus();
 	};
 
 	return (
 		<div className="flex h-full min-h-0 flex-col gap-4">
-			<Header
-				remainingQuestions={remainingQuestions}
-				contextRegion={contextRegion}
-				contextBudget={contextBudget}
-			/>
+			<Header remainingQuestions={remainingQuestions} />
 
 			<div className="flex min-h-0 flex-1 flex-col gap-4">
 				{messages.length === 0 ? (
@@ -91,22 +104,14 @@ export function ChatWindow({ context, contextRegion, contextBudget }: ChatWindow
 
 // ---- 내부 서브 컴포넌트 ----------------------------------------------------
 
-function Header({
-	remainingQuestions,
-	contextRegion,
-	contextBudget,
-}: {
-	remainingQuestions: number;
-	contextRegion?: string;
-	contextBudget?: number;
-}) {
+function Header({ remainingQuestions }: { remainingQuestions: number }) {
 	const warningThreshold = remainingQuestions <= 1;
 	const badgeToneClass = warningThreshold ? "text-warning" : "text-tertiary";
 
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
 			<div className="flex flex-wrap items-center gap-2">
-				<ContextBadge region={contextRegion} budget={contextBudget} />
+				<ChatContextBadge />
 			</div>
 			<div
 				className={`inline-flex items-center gap-1.5 rounded-pill bg-control-active px-3 py-1 text-[11px] font-medium tabular-nums ${badgeToneClass}`}
@@ -114,11 +119,19 @@ function Header({
 			>
 				<span className="uppercase tracking-[0.08em]">남은 질문</span>
 				<span>
-					{remainingQuestions}/{MAX_QUESTIONS}
+					{remainingQuestions}/{MAX_QUESTIONS_PER_SESSION}
 				</span>
 			</div>
 		</div>
 	);
+}
+
+// Atomic subcomponent — simulator store 의 region/totalBudget slice 만 구독한다.
+// 시뮬레이터 값이 바뀌면 **이 작은 뱃지만** 리렌더되며, ChatWindow 본체는 정지 상태.
+function ChatContextBadge() {
+	const region = useSimulatorSelector((s) => s.region);
+	const totalBudget = useSimulatorSelector((s) => s.result?.total_budget);
+	return <ContextBadge region={region} budget={totalBudget} />;
 }
 
 function EmptyMessageList({
@@ -203,8 +216,8 @@ function ExhaustedBanner() {
 			role="status"
 			className="rounded-md border border-border-default bg-control px-4 py-3 text-[11px] leading-relaxed text-tertiary"
 		>
-			비용 제어를 위해 세션당 질문 수를 {MAX_QUESTIONS}회로 제한합니다. 새 탭을 열면 다시 질문할 수
-			있습니다.
+			비용 제어를 위해 세션당 질문 수를 {MAX_QUESTIONS_PER_SESSION}회로 제한합니다. 새 탭을 열면
+			다시 질문할 수 있습니다.
 		</div>
 	);
 }

@@ -47,7 +47,3 @@ export function getOrCreateSessionId(): string {
 		return "";
 	}
 }
-
-export function getMaxQuestions(): number {
-	return MAX_QUESTIONS_PER_SESSION;
-}

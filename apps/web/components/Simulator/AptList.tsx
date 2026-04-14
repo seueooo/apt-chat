@@ -9,12 +9,11 @@
  */
 
 import type { Apartment } from "@/lib/types";
+import { useSimulatorSelector } from "@/stores/simulator-store";
 import { formatPrice, toPyeong } from "@/utils/format";
 
-type AptListProps = {
-	apartments: Apartment[];
-	loading: boolean;
-};
+// 모듈 레벨 stable 빈 배열 — selector 가 매번 새 `[]` 를 반환하면 무한 리렌더.
+const EMPTY_APARTMENTS: Apartment[] = [];
 
 function apartmentKey(apt: Apartment): string {
 	return `${apt.apartment_name}-${apt.deal_date}-${apt.floor}-${apt.exclusive_area}`;
@@ -62,7 +61,12 @@ function AptRow({ apt }: { apt: Apartment }) {
 	);
 }
 
-export function AptList({ apartments, loading }: AptListProps) {
+export function AptList() {
+	// `result?.apartments` 는 동일 result 객체 안에서는 같은 array reference.
+	// 결과가 없을 때만 모듈 const `EMPTY_APARTMENTS` 로 fallback (selector 안정성).
+	const apartments = useSimulatorSelector((s) => s.result?.apartments ?? EMPTY_APARTMENTS);
+	const loading = useSimulatorSelector((s) => s.loading);
+
 	if (loading && apartments.length === 0) {
 		return (
 			<div

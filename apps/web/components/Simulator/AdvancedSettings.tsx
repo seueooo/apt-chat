@@ -3,21 +3,13 @@
 /**
  * AdvancedSettings — 기본 접힌 상태의 "고급 설정" 패널.
  *
- * 금리(%)와 DSR 한도(%)를 조정한다. SliderGroup 과 동일한 `simulator-range`
- * 클래스를 재사용해 시각적 일관성을 유지한다 (globals.css 가 아닌 SliderGroup
- * 내부 `<style>` 에 정의되어 있으므로, SliderGroup 이 같은 패널 안에서 먼저
- * 마운트되어 있는 것을 전제로 한다 — 실제로 부모가 둘 다 렌더함).
+ * 본체는 collapse 토글 (`open`) 만 자체 상태로 들고, store 구독은 없다.
+ * 헤더 inline 값과 슬라이더는 atomic 자식들이 자기 필드만 selector 로 구독한다.
  */
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-
-type AdvancedSettingsProps = {
-	interestRate: number;
-	dsrLimit: number;
-	onInterestRateChange: (value: number) => void;
-	onDsrLimitChange: (value: number) => void;
-};
+import { useSimulatorActions, useSimulatorSelector } from "@/stores/simulator-store";
 
 type AdvancedSliderRowProps = {
 	id: string;
@@ -71,12 +63,57 @@ function AdvancedSliderRow({
 	);
 }
 
-export function AdvancedSettings({
-	interestRate,
-	dsrLimit,
-	onInterestRateChange,
-	onDsrLimitChange,
-}: AdvancedSettingsProps) {
+// --- Atomic header text components -----------------------------------------
+
+function HeaderInterestRate() {
+	const interestRate = useSimulatorSelector((s) => s.interestRate);
+	return <span>금리 {interestRate.toFixed(1)}%</span>;
+}
+
+function HeaderDsrLimit() {
+	const dsrLimit = useSimulatorSelector((s) => s.dsrLimit);
+	return <span>DSR {dsrLimit}%</span>;
+}
+
+// --- Atomic slider field components ----------------------------------------
+
+function InterestRateField() {
+	const interestRate = useSimulatorSelector((s) => s.interestRate);
+	const { setInterestRate } = useSimulatorActions();
+	return (
+		<AdvancedSliderRow
+			id="sim-interest-rate"
+			label="금리"
+			display={`${interestRate.toFixed(1)}%`}
+			min={0}
+			max={30}
+			step={0.1}
+			value={interestRate}
+			onChange={setInterestRate}
+		/>
+	);
+}
+
+function DsrLimitField() {
+	const dsrLimit = useSimulatorSelector((s) => s.dsrLimit);
+	const { setDsrLimit } = useSimulatorActions();
+	return (
+		<AdvancedSliderRow
+			id="sim-dsr-limit"
+			label="DSR 한도"
+			display={`${dsrLimit}%`}
+			min={1}
+			max={100}
+			step={1}
+			value={dsrLimit}
+			onChange={setDsrLimit}
+		/>
+	);
+}
+
+// --- Wrapper ---------------------------------------------------------------
+
+export function AdvancedSettings() {
 	const [open, setOpen] = useState<boolean>(false);
 
 	return (
@@ -90,8 +127,8 @@ export function AdvancedSettings({
 			>
 				<span>고급 설정</span>
 				<span className="flex items-center gap-3 text-[11px] font-normal normal-case tabular-nums text-quaternary">
-					<span>금리 {interestRate.toFixed(1)}%</span>
-					<span>DSR {dsrLimit}%</span>
+					<HeaderInterestRate />
+					<HeaderDsrLimit />
 					<ChevronDown
 						aria-hidden="true"
 						className={`size-4 text-tertiary transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
@@ -110,26 +147,8 @@ export function AdvancedSettings({
 			>
 				<div className="overflow-hidden">
 					<div className="flex flex-col gap-5 pt-4">
-						<AdvancedSliderRow
-							id="sim-interest-rate"
-							label="금리"
-							display={`${interestRate.toFixed(1)}%`}
-							min={0}
-							max={30}
-							step={0.1}
-							value={interestRate}
-							onChange={onInterestRateChange}
-						/>
-						<AdvancedSliderRow
-							id="sim-dsr-limit"
-							label="DSR 한도"
-							display={`${dsrLimit}%`}
-							min={1}
-							max={100}
-							step={1}
-							value={dsrLimit}
-							onChange={onDsrLimitChange}
-						/>
+						<InterestRateField />
+						<DsrLimitField />
 					</div>
 				</div>
 			</div>

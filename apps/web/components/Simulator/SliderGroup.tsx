@@ -1,23 +1,16 @@
 "use client";
 
 /**
- * SliderGroup — 연봉/보유 현금/대출기간 세 개의 기본 슬라이더.
+ * SliderGroup — 연봉/보유 현금/대출기간 세 슬라이더 컨테이너.
  *
- * presentation only. 상위 (container) 가 `useSimulator` 의 `state`/`update` 를
- * 그대로 내려준다. 슬라이더는 native `<input type="range">` 를 Tailwind v4
- * 토큰으로 커스터마이즈 — 외부 UI 라이브러리 없음.
+ * 본체는 정적 layout 으로, 자체 store 구독이 없다 (mount 후 다시 렌더되지 않음).
+ * 각 atomic 컴포넌트 (`SalarySlider` / `SavingsSlider` / `LoanYearsSlider`) 가
+ * `useSimulatorSelector` 로 자기 필드만 구독하므로, 한 슬라이더를 드래그하면
+ * **그 슬라이더 컴포넌트만** 리렌더된다.
  */
 
+import { useSimulatorActions, useSimulatorSelector } from "@/stores/simulator-store";
 import { formatPrice } from "@/utils/format";
-
-type SliderGroupProps = {
-	salary: number;
-	savings: number;
-	loanYears: number;
-	onChangeSalary: (value: number) => void;
-	onChangeSavings: (value: number) => void;
-	onChangeLoanYears: (value: number) => void;
-};
 
 type SliderRowProps = {
 	id: string;
@@ -29,6 +22,7 @@ type SliderRowProps = {
 	max: number;
 	step: number;
 	value: number;
+	formatBoundary: (value: number) => string;
 	onChange: (value: number) => void;
 };
 
@@ -42,6 +36,7 @@ function SliderRow({
 	max,
 	step,
 	value,
+	formatBoundary,
 	onChange,
 }: SliderRowProps) {
 	const percent = ((value - min) / (max - min)) * 100;
@@ -75,63 +70,80 @@ function SliderRow({
 				style={{ "--range-progress": `${percent}%` } as React.CSSProperties}
 			/>
 			<div className="flex items-center justify-between gap-3 text-[11px] font-medium text-quaternary tabular-nums">
-				<span>{formatRangeLabel(id, min)}</span>
+				<span>{formatBoundary(min)}</span>
 				{rangeNote ? <span className="whitespace-nowrap">{rangeNote}</span> : null}
-				<span>{formatRangeLabel(id, max)}</span>
+				<span>{formatBoundary(max)}</span>
 			</div>
 		</div>
 	);
 }
 
-function formatRangeLabel(id: string, value: number): string {
-	if (id === "sim-loan-years") {
-		return `${value}년`;
-	}
-	return formatPrice(value);
+const formatYears = (value: number): string => `${value}년`;
+
+// --- Atomic field components ------------------------------------------------
+
+function SalarySlider() {
+	const salary = useSimulatorSelector((s) => s.salary);
+	const { setSalary } = useSimulatorActions();
+	return (
+		<SliderRow
+			id="sim-salary"
+			label="연봉"
+			display={formatPrice(salary)}
+			min={2000}
+			max={50000}
+			step={500}
+			value={salary}
+			formatBoundary={formatPrice}
+			onChange={setSalary}
+		/>
+	);
 }
 
-export function SliderGroup({
-	salary,
-	savings,
-	loanYears,
-	onChangeSalary,
-	onChangeSavings,
-	onChangeLoanYears,
-}: SliderGroupProps) {
+function SavingsSlider() {
+	const savings = useSimulatorSelector((s) => s.savings);
+	const { setSavings } = useSimulatorActions();
+	return (
+		<SliderRow
+			id="sim-savings"
+			label="보유 현금"
+			display={formatPrice(savings)}
+			min={0}
+			max={50000}
+			step={500}
+			value={savings}
+			formatBoundary={formatPrice}
+			onChange={setSavings}
+		/>
+	);
+}
+
+function LoanYearsSlider() {
+	const loanYears = useSimulatorSelector((s) => s.loanYears);
+	const { setLoanYears } = useSimulatorActions();
+	return (
+		<SliderRow
+			id="sim-loan-years"
+			label="대출 기간"
+			display={formatYears(loanYears)}
+			caption="원리금 균등상환"
+			rangeNote="한국 주담대 표준 만기"
+			min={10}
+			max={40}
+			step={1}
+			value={loanYears}
+			formatBoundary={formatYears}
+			onChange={setLoanYears}
+		/>
+	);
+}
+
+export function SliderGroup() {
 	return (
 		<div className="flex flex-col gap-4">
-			<SliderRow
-				id="sim-salary"
-				label="연봉"
-				display={formatPrice(salary)}
-				min={2000}
-				max={50000}
-				step={500}
-				value={salary}
-				onChange={onChangeSalary}
-			/>
-			<SliderRow
-				id="sim-savings"
-				label="보유 현금"
-				display={formatPrice(savings)}
-				min={0}
-				max={50000}
-				step={500}
-				value={savings}
-				onChange={onChangeSavings}
-			/>
-			<SliderRow
-				id="sim-loan-years"
-				label="대출 기간"
-				display={`${loanYears}년`}
-				caption="원리금 균등상환"
-				rangeNote="한국 주담대 표준 만기"
-				min={10}
-				max={40}
-				step={1}
-				value={loanYears}
-				onChange={onChangeLoanYears}
-			/>
+			<SalarySlider />
+			<SavingsSlider />
+			<LoanYearsSlider />
 		</div>
 	);
 }
