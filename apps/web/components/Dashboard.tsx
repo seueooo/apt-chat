@@ -33,7 +33,7 @@ export function Dashboard() {
 	return (
 		<div className="flex min-h-screen flex-col p-3 md:h-screen md:flex-row md:p-6">
 			{/* Simulator Panel */}
-			<section className="flex flex-1 flex-col gap-4 border-b border-border-default p-6 md:min-h-0 md:overflow-y-auto md:border-r md:border-b-0">
+			<section className="flex flex-1 flex-col gap-4 p-6 md:min-h-0 md:overflow-y-auto">
 				<div className="flex flex-col gap-1">
 					<h2 className="text-xl font-semibold tracking-[-0.24px] text-primary">
 						When-to-Buy Apartment Simulator
