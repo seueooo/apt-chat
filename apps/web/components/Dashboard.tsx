@@ -18,10 +18,21 @@ import { RegionSelector } from "@/components/Simulator/RegionSelector";
 import { SliderGroup } from "@/components/Simulator/SliderGroup";
 import { SummaryCards } from "@/components/Simulator/SummaryCards";
 import { useSimulator } from "@/hooks/useSimulator";
-import type { ChatContext } from "@/lib/types";
+import type { ChatContext, Region, SimulateResponse } from "@/lib/types";
 
-export function Dashboard() {
-	const { state, update, result, loading } = useSimulator();
+type DashboardProps = {
+	/** Server Component 에서 미리 fetch 한 regions. RegionSelector 의 초기 데이터로 사용된다. */
+	initialRegions: Region[];
+	/**
+	 * Server Component 에서 `DEFAULT_SIMULATOR_STATE` 로 prefetch 한 simulate 결과.
+	 * useSimulator 가 `initialData` 로 소비해 첫 렌더가 skeleton 없이 완료된다.
+	 * null 이면 backend 장애 fallback — 기존 클라 쿼리 플로우.
+	 */
+	initialResult: SimulateResponse | null;
+};
+
+export function Dashboard({ initialRegions, initialResult }: DashboardProps) {
+	const { state, update, result, loading } = useSimulator(initialResult);
 
 	// ChatContext: 지역은 계산 전부터 유효하므로 항상 포함하고,
 	// total_budget 은 시뮬레이션 결과가 있을 때만 채운다.
@@ -40,7 +51,11 @@ export function Dashboard() {
 					</h2>
 					<p className="text-sm text-tertiary">연봉으로 서울 아파트 구매 시기 유추하기</p>
 				</div>
-				<RegionSelector value={state.region} onChange={(region) => update("region", region)} />
+				<RegionSelector
+					value={state.region}
+					onChange={(region) => update("region", region)}
+					initialRegions={initialRegions}
+				/>
 				<SliderGroup
 					salary={state.salary}
 					savings={state.savings}

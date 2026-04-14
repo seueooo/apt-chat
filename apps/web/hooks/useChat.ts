@@ -13,12 +13,13 @@
  * 6. 카운터는 음수를 허용하지 않는다 (`Math.max(0, ...)`).
  *
  * SSR 가드:
- * - `sessionId` 는 빈 문자열로 초기화 후 `useEffect` 에서 `getOrCreateSessionId()` 를 호출.
- *   이 방식은 서버 렌더 결과와 클라이언트 첫 렌더 결과가 동일해 hydration mismatch 를 피한다.
+ * - `getOrCreateSessionId()` 는 `mutationFn` 내부에서 lazy 하게 호출된다. mutation 은
+ *   사용자 action(클릭/전송) 이후에만 실행되므로 이미 hydration 이 끝난 시점이며,
+ *   `useEffect` 를 통한 상태 동기화 없이도 항상 유효한 session id 를 얻는다.
  */
 
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import { getMaxQuestions, getOrCreateSessionId } from "@/lib/session";
 import type { ChatContext, ChatMessage, ChatResponse } from "@/lib/types";
@@ -50,15 +51,9 @@ function clampRemaining(value: number): number {
 }
 
 export function useChat(context?: ChatContext): UseChatResult {
-	const [sessionId, setSessionId] = useState<string>("");
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [remainingQuestions, setRemainingQuestions] = useState<number>(getMaxQuestions());
 	const [error, setError] = useState<ApiError | null>(null);
-
-	// Hydration 직후 세션 ID 로드 (SSR 가드)
-	useEffect(() => {
-		setSessionId(getOrCreateSessionId());
-	}, []);
 
 	const mutation = useMutation<ChatResponse, Error, string>({
 		mutationFn: (content: string) => {
@@ -67,8 +62,9 @@ export function useChat(context?: ChatContext): UseChatResult {
 				...messages.map((m) => ({ role: m.role, content: m.content })),
 				{ role: "user" as const, content },
 			];
+			// mutationFn 은 사용자 action 이후에만 실행되므로 브라우저 컨텍스트가 보장됨.
 			return api.chat({
-				sessionId,
+				sessionId: getOrCreateSessionId(),
 				messages: history,
 				context: context ?? null,
 			});

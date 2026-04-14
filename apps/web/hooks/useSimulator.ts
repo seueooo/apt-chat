@@ -11,38 +11,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { type ApiError, api } from "@/lib/api";
-import type { SimulateRequest, SimulateResponse } from "@/lib/types";
+import {
+	DEFAULT_SIMULATOR_STATE,
+	type SimulatorState,
+	stateToSimulateRequest,
+} from "@/lib/simulator";
+import type { SimulateResponse } from "@/lib/types";
 
-export type SimulatorState = {
-	salary: number;
-	savings: number;
-	loanYears: number;
-	region: string;
-	interestRate: number;
-	dsrLimit: number;
-};
-
-export const DEFAULT_SIMULATOR_STATE: SimulatorState = {
-	salary: 5000,
-	savings: 10000,
-	loanYears: 30,
-	region: "서울 전체",
-	interestRate: 3.9,
-	dsrLimit: 40,
-};
+export { DEFAULT_SIMULATOR_STATE, type SimulatorState };
 
 const DEBOUNCE_MS = 300;
-
-function stateToRequest(state: SimulatorState): SimulateRequest {
-	return {
-		salary: state.salary,
-		savings: state.savings,
-		loan_years: state.loanYears,
-		region: state.region,
-		interest_rate: state.interestRate,
-		dsr_limit: state.dsrLimit,
-	};
-}
 
 export type UseSimulatorResult = {
 	state: SimulatorState;
@@ -52,7 +30,12 @@ export type UseSimulatorResult = {
 	error: ApiError | null;
 };
 
-export function useSimulator(): UseSimulatorResult {
+/**
+ * @param initialResult Server Component 가 `DEFAULT_SIMULATOR_STATE` 에 대해 prefetch 한
+ *   결과. 존재하면 React Query 의 `initialData` 로 주입되어 첫 렌더가 skeleton 없이 완료된다.
+ *   null 이면 (backend 장애 등) 기존 클라 쿼리 플로우로 자연 fallback.
+ */
+export function useSimulator(initialResult?: SimulateResponse | null): UseSimulatorResult {
 	const [state, setState] = useState<SimulatorState>(DEFAULT_SIMULATOR_STATE);
 	const [debounced, setDebounced] = useState<SimulatorState>(DEFAULT_SIMULATOR_STATE);
 
@@ -63,9 +46,13 @@ export function useSimulator(): UseSimulatorResult {
 
 	const query = useQuery<SimulateResponse, ApiError>({
 		queryKey: ["simulate", debounced],
-		queryFn: () => api.simulate(stateToRequest(debounced)),
+		queryFn: () => api.simulate(stateToSimulateRequest(debounced)),
 		staleTime: 60_000,
 		placeholderData: (previous) => previous,
+		// initialData 는 첫 쿼리 키 (=DEFAULT_SIMULATOR_STATE) 에만 적용된다.
+		// 사용자가 값 변경 후 다시 기본값으로 돌아와도 해당 키는 이미 캐시되어 있으므로
+		// initialData 가 재적용되지 않아 stale 데이터 오염 걱정 없음.
+		initialData: initialResult ?? undefined,
 	});
 
 	const update = <K extends keyof SimulatorState>(key: K, value: SimulatorState[K]): void => {

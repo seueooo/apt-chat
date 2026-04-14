@@ -5,9 +5,11 @@
  *
  * - 부모가 `useSimulator` 의 `state.region` 과 `update("region", ...)` 을
  *   value/onValueChange 로 그대로 바인딩한다.
- * - 지역 목록은 `staleTime: Infinity` 로 한 번만 fetch (세션 내 불변).
- * - 로딩/에러 시 조용히 "서울 전체" 단일 옵션만 노출 — 시뮬레이터가 기본 지역으로
- *   동작하도록 graceful degradation.
+ * - `initialRegions` 는 `app/page.tsx` Server Component 에서 선로드된 값.
+ *   useQuery 의 `initialData` 로 주입해 첫 렌더부터 완성된 목록을 노출하고
+ *   네트워크 왕복/로딩 flash 를 제거한다.
+ * - `staleTime: Infinity` — 지역 목록은 세션 내 불변이므로 클라이언트 재요청 금지.
+ * - 에러/빈 배열 시 조용히 "서울 전체" 단일 옵션만 노출 (graceful degradation).
  */
 
 import * as Select from "@radix-ui/react-select";
@@ -21,20 +23,21 @@ const ALL_REGIONS_LABEL = "서울 전체";
 type RegionSelectorProps = {
 	value: string;
 	onChange: (region: string) => void;
+	initialRegions: Region[];
 };
 
-export function RegionSelector({ value, onChange }: RegionSelectorProps) {
-	const {
-		data: regions,
-		isPending,
-		isError,
-	} = useQuery<Region[]>({
+export function RegionSelector({ value, onChange, initialRegions }: RegionSelectorProps) {
+	// 서버가 비어있는 배열을 내려준 경우 (백엔드 장애 등) 는 initialData 를 생략해
+	// 클라이언트 fallback fetch 로 복구 시도하고, 실패 시 isError 로 에러 UI 노출.
+	const hasServerData = initialRegions.length > 0;
+	const { data: regions, isError } = useQuery<Region[]>({
 		queryKey: ["regions"],
 		queryFn: () => api.regions(),
 		staleTime: Number.POSITIVE_INFINITY,
+		initialData: hasServerData ? initialRegions : undefined,
 	});
 
-	const options = isPending || isError || !regions ? [] : regions;
+	const options = regions ?? [];
 
 	return (
 		<div className="flex flex-col gap-2">
