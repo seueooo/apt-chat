@@ -35,7 +35,7 @@ export function Dashboard() {
 			{/* Simulator Panel */}
 			<section className="flex flex-1 flex-col gap-4 p-6 md:min-h-0 md:overflow-y-auto">
 				<div className="flex flex-col gap-1">
-					<h2 className="text-xl font-semibold tracking-[-0.24px] text-primary">
+					<h2 className="text-balance text-xl font-semibold tracking-[-0.24px] text-primary">
 						When-to-Buy Apartment Simulator
 					</h2>
 					<p className="text-sm text-tertiary">연봉으로 서울 아파트 구매 시기 유추하기</p>

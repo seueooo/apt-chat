@@ -34,7 +34,7 @@ export function SampleQuestions({ onSelect, disabled = false }: SampleQuestionsP
 						type="button"
 						disabled={disabled}
 						onClick={() => onSelect(q)}
-						className="rounded-pill border border-border-default bg-control px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-control-hover hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-pill border border-border-default bg-control px-3 py-1.5 text-xs font-medium text-secondary transition-[background-color,color,transform] hover:bg-control-hover hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
 					>
 						{q}
 					</button>

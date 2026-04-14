@@ -9,7 +9,7 @@
  * 마운트되어 있는 것을 전제로 한다 — 실제로 부모가 둘 다 렌더함).
  */
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 type AdvancedSettingsProps = {
@@ -80,7 +80,7 @@ export function AdvancedSettings({
 	const [open, setOpen] = useState<boolean>(false);
 
 	return (
-		<div className="flex flex-col gap-4 border-t border-border-subtle pt-2">
+		<div className="flex flex-col border-t border-border-subtle pt-2">
 			<button
 				type="button"
 				onClick={() => setOpen((prev) => !prev)}
@@ -92,37 +92,47 @@ export function AdvancedSettings({
 				<span className="flex items-center gap-3 text-[11px] font-normal normal-case tabular-nums text-quaternary">
 					<span>금리 {interestRate.toFixed(1)}%</span>
 					<span>DSR {dsrLimit}%</span>
-					{open ? (
-						<ChevronUp aria-hidden="true" className="size-4 text-tertiary" />
-					) : (
-						<ChevronDown aria-hidden="true" className="size-4 text-tertiary" />
-					)}
+					<ChevronDown
+						aria-hidden="true"
+						className={`size-4 text-tertiary transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
+							open ? "rotate-180" : "rotate-0"
+						}`}
+					/>
 				</span>
 			</button>
-			{open ? (
-				<div id="sim-advanced-panel" className="flex flex-col gap-5">
-					<AdvancedSliderRow
-						id="sim-interest-rate"
-						label="금리"
-						display={`${interestRate.toFixed(1)}%`}
-						min={0}
-						max={30}
-						step={0.1}
-						value={interestRate}
-						onChange={onInterestRateChange}
-					/>
-					<AdvancedSliderRow
-						id="sim-dsr-limit"
-						label="DSR 한도"
-						display={`${dsrLimit}%`}
-						min={1}
-						max={100}
-						step={1}
-						value={dsrLimit}
-						onChange={onDsrLimitChange}
-					/>
+			<div
+				id="sim-advanced-panel"
+				inert={!open}
+				aria-hidden={!open}
+				className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+					open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+				}`}
+			>
+				<div className="overflow-hidden">
+					<div className="flex flex-col gap-5 pt-4">
+						<AdvancedSliderRow
+							id="sim-interest-rate"
+							label="금리"
+							display={`${interestRate.toFixed(1)}%`}
+							min={0}
+							max={30}
+							step={0.1}
+							value={interestRate}
+							onChange={onInterestRateChange}
+						/>
+						<AdvancedSliderRow
+							id="sim-dsr-limit"
+							label="DSR 한도"
+							display={`${dsrLimit}%`}
+							min={1}
+							max={100}
+							step={1}
+							value={dsrLimit}
+							onChange={onDsrLimitChange}
+						/>
+					</div>
 				</div>
-			) : null}
+			</div>
 		</div>
 	);
 }

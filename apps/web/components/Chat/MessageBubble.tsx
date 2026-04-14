@@ -114,7 +114,7 @@ function AssistantData({ data }: { data: ChatResponse }) {
 						onClick={() => setSqlOpen((prev) => !prev)}
 						aria-expanded={sqlOpen}
 						aria-controls="assistant-sql-block"
-						className="text-[11px] font-medium uppercase tracking-[0.08em] text-quaternary transition-colors hover:text-tertiary focus-visible:outline-none focus-visible:text-tertiary"
+						className="inline-block origin-left text-[11px] font-medium uppercase tracking-[0.08em] text-quaternary transition-[color,transform] hover:text-tertiary focus-visible:outline-none focus-visible:text-tertiary active:scale-[0.96]"
 					>
 						SQL {sqlOpen ? "▴" : "▾"}
 					</button>
@@ -146,7 +146,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 	return (
 		<div className="flex justify-start">
 			<div className="w-full max-w-[92%] rounded-lg border border-border-subtle bg-panel px-4 py-3">
-				<p className="whitespace-pre-wrap text-sm leading-relaxed text-secondary">
+				<p className="whitespace-pre-wrap text-pretty text-sm leading-relaxed text-secondary">
 					{message.content}
 				</p>
 				{message.data ? <AssistantData data={message.data} /> : null}

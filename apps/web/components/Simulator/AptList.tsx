@@ -24,10 +24,10 @@ function SkeletonRow() {
 	return (
 		<div className="flex items-center justify-between gap-4 border-b border-border-subtle px-2 py-3">
 			<div className="flex flex-col gap-2">
-				<div className="h-3 w-32 rounded-sm bg-control-active" />
-				<div className="h-2 w-24 rounded-sm bg-control-active" />
+				<div className="h-3 w-32 rounded-full bg-control-active" />
+				<div className="h-2 w-24 rounded-full bg-control-active" />
 			</div>
-			<div className="h-3 w-20 rounded-sm bg-control-active" />
+			<div className="h-3 w-20 rounded-full bg-control-active" />
 		</div>
 	);
 }

@@ -140,10 +140,10 @@ function MessageList({
 		return (
 			<div className="flex min-h-0 flex-1 flex-col justify-between gap-6 rounded-lg border border-border-subtle bg-control p-6">
 				<div className="flex flex-col gap-2">
-					<h3 className="text-lg font-medium tracking-[-0.24px] text-primary">
+					<h3 className="text-balance text-lg font-medium tracking-[-0.24px] text-primary">
 						무엇이 궁금하세요?
 					</h3>
-					<p className="text-sm leading-relaxed text-tertiary">
+					<p className="text-pretty text-sm leading-relaxed text-tertiary">
 						자연어로 질문하면 실거래가 데이터에서 바로 답을 찾아 드립니다. 차트와 표가 필요한 질문은
 						자동으로 시각화됩니다.
 					</p>
@@ -258,7 +258,7 @@ function Composer({
 					onClick={onSubmit}
 					disabled={!canSend}
 					aria-label="전송"
-					className="shrink-0 rounded-md bg-brand px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border disabled:cursor-not-allowed disabled:opacity-50"
+					className="shrink-0 rounded-md bg-brand px-4 py-2 text-xs font-medium text-primary transition-[background-color,transform] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
 				>
 					{loading ? "전송 중" : "전송"}
 				</button>
