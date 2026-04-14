@@ -258,7 +258,7 @@ function Composer({
 					onClick={onSubmit}
 					disabled={!canSend}
 					aria-label="전송"
-					className="shrink-0 rounded-md bg-brand px-4 py-2 text-xs font-medium text-primary transition-[background-color,transform] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+					className="shrink-0 rounded-pill bg-brand px-5 py-2 text-xs font-medium text-primary transition-[background-color,transform] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-border active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
 				>
 					{loading ? "전송 중" : "전송"}
 				</button>

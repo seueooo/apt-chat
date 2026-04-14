@@ -59,7 +59,7 @@ export function RegionSelector({ value, onChange }: RegionSelectorProps) {
 					<Select.Content
 						position="popper"
 						sideOffset={4}
-						className="z-50 w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border-default bg-elevated shadow-[0_0_0_1px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.5)]"
+						className="z-50 w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border-default bg-elevated shadow-popover"
 					>
 						<Select.Viewport className="max-h-[320px] overflow-y-auto p-1">
 							<RegionItem value={ALL_REGIONS_LABEL}>{ALL_REGIONS_LABEL}</RegionItem>

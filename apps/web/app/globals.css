@@ -1,42 +1,48 @@
 @import "tailwindcss";
 
+/*
+ * Light theme inspired by Supabase dashboard.
+ * - Warm off-white canvas (#fbfbfa) with pure-white panels
+ * - Mint green brand (#3ecf8e) used sparingly as identity marker
+ * - Depth via thin borders + minimal shadows (no heavy elevation)
+ */
 @theme inline {
   /* Background Surfaces */
-  --color-canvas: #08090a;
-  --color-panel: #0f1011;
-  --color-surface: #191a1b;
-  --color-elevated: #28282c;
+  --color-canvas: #fbfbfa;
+  --color-panel: #ffffff;
+  --color-surface: #ffffff;
+  --color-elevated: #ffffff;
 
-  /* Translucent Controls */
-  --color-control: rgba(255, 255, 255, 0.02);
-  --color-control-hover: rgba(255, 255, 255, 0.04);
-  --color-control-active: rgba(255, 255, 255, 0.05);
+  /* Translucent / Inset Controls (slightly darker than canvas in light mode) */
+  --color-control: #ffffff;
+  --color-control-hover: #f5f5f4;
+  --color-control-active: #ededec;
 
-  /* Text */
-  --color-primary: #f7f8f8;
-  --color-secondary: #d0d6e0;
-  --color-tertiary: #8a8f98;
-  --color-quaternary: #62666d;
+  /* Text — warm near-black to faint */
+  --color-primary: #171717;
+  --color-secondary: #3f3f3e;
+  --color-tertiary: #737373;
+  --color-quaternary: #a3a3a2;
 
-  /* Brand & Accent */
-  --color-brand: #5e6ad2;
-  --color-accent: #7170ff;
-  --color-accent-hover: #828fff;
-  --color-brand-muted: rgba(94, 106, 210, 0.1);
-  --color-brand-border: rgba(94, 106, 210, 0.3);
+  /* Brand & Accent — Supabase mint */
+  --color-brand: #3ecf8e;
+  --color-accent: #24b47e;
+  --color-accent-hover: #1a9a67;
+  --color-brand-muted: rgba(62, 207, 142, 0.1);
+  --color-brand-border: rgba(62, 207, 142, 0.45);
 
-  /* Status */
-  --color-success: #27a644;
+  /* Status — calibrated for white background contrast */
+  --color-success: #15803d;
   --color-success-alt: #10b981;
-  --color-warning: #f59e0b;
+  --color-warning: #b45309;
 
-  /* Borders */
-  --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-default: rgba(255, 255, 255, 0.08);
-  --color-border-solid: #23252a;
+  /* Borders — translucent black so they layer naturally on any surface */
+  --color-border-subtle: rgba(0, 0, 0, 0.06);
+  --color-border-default: rgba(0, 0, 0, 0.1);
+  --color-border-solid: #d4d4d3;
 
-  /* Overlay */
-  --color-overlay: rgba(0, 0, 0, 0.85);
+  /* Overlay (modal backdrops) */
+  --color-overlay: rgba(0, 0, 0, 0.5);
 
   /* Typography */
   --font-sans: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
@@ -45,8 +51,8 @@
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-regular: 400;
-  --font-weight-medium: 510;
-  --font-weight-semibold: 590;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
 
   /* Border Radius */
   --radius-micro: 2px;
@@ -57,9 +63,12 @@
   --radius-2xl: 22px;
   --radius-pill: 9999px;
 
-  /* Shadows / Elevation (DESIGN.md §3) */
-  --shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-focus: 0 0 0 2px var(--color-brand), 0 0 0 4px var(--color-brand-muted);
+  /* Shadows / Elevation
+     Light mode uses very subtle shadows + hairline ring for depth.
+     Heavy elevation is reserved for popovers/dropdowns. */
+  --shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-popover: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(62, 207, 142, 0.25);
 }
 
 body {
@@ -117,7 +126,7 @@ body {
   height: 16px;
   margin-top: -6px;
   border-radius: var(--radius-pill);
-  background: var(--color-primary);
+  background: var(--color-panel);
   border: 1px solid var(--color-brand-border);
   box-shadow: var(--shadow-elevated);
   transition: transform 120ms ease, box-shadow 120ms ease;
@@ -127,7 +136,7 @@ body {
   width: 16px;
   height: 16px;
   border-radius: var(--radius-pill);
-  background: var(--color-primary);
+  background: var(--color-panel);
   border: 1px solid var(--color-brand-border);
   box-shadow: var(--shadow-elevated);
   transition: transform 120ms ease, box-shadow 120ms ease;
