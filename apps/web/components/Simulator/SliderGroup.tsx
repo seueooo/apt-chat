@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SliderGroup — 연봉/저축/대출기간 세 개의 기본 슬라이더.
+ * SliderGroup — 연봉/보유 현금/대출기간 세 개의 기본 슬라이더.
  *
  * presentation only. 상위 (container) 가 `useSimulator` 의 `state`/`update` 를
  * 그대로 내려준다. 슬라이더는 native `<input type="range">` 를 Tailwind v4
@@ -24,6 +24,7 @@ type SliderRowProps = {
 	label: string;
 	display: string;
 	caption?: string;
+	rangeNote?: string;
 	min: number;
 	max: number;
 	step: number;
@@ -36,6 +37,7 @@ function SliderRow({
 	label,
 	display,
 	caption,
+	rangeNote,
 	min,
 	max,
 	step,
@@ -54,10 +56,10 @@ function SliderRow({
 					{label}
 				</label>
 				<div className="flex items-baseline gap-2">
+					{caption ? <span className="text-xs text-quaternary">{caption}</span> : null}
 					<span className="text-lg font-medium tracking-[-0.24px] text-primary tabular-nums">
 						{display}
 					</span>
-					{caption ? <span className="text-xs text-quaternary">{caption}</span> : null}
 				</div>
 			</div>
 			<input
@@ -72,8 +74,9 @@ function SliderRow({
 				className="simulator-range"
 				style={{ "--range-progress": `${percent}%` } as React.CSSProperties}
 			/>
-			<div className="flex items-center justify-between text-[11px] font-medium text-quaternary tabular-nums">
+			<div className="flex items-center justify-between gap-3 text-[11px] font-medium text-quaternary tabular-nums">
 				<span>{formatRangeLabel(id, min)}</span>
+				{rangeNote ? <span className="whitespace-nowrap">{rangeNote}</span> : null}
 				<span>{formatRangeLabel(id, max)}</span>
 			</div>
 		</div>
@@ -109,7 +112,7 @@ export function SliderGroup({
 			/>
 			<SliderRow
 				id="sim-savings"
-				label="저축"
+				label="보유 현금"
 				display={formatPrice(savings)}
 				min={0}
 				max={50000}
@@ -122,6 +125,7 @@ export function SliderGroup({
 				label="대출 기간"
 				display={`${loanYears}년`}
 				caption="원리금 균등상환"
+				rangeNote="한국 주담대 표준 만기"
 				min={10}
 				max={40}
 				step={1}

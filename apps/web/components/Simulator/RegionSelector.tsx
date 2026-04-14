@@ -48,11 +48,11 @@ export function RegionSelector({ value, onChange }: RegionSelectorProps) {
 				<Select.Trigger
 					id="sim-region"
 					aria-label="지역"
-					className="flex w-full items-center justify-between gap-2 rounded-md border border-border-default bg-control px-3 py-2 text-sm font-medium text-primary outline-none transition-colors hover:bg-control-hover focus-visible:border-brand-border focus-visible:ring-2 focus-visible:ring-brand-muted data-[state=open]:border-brand-border"
+					className="group flex w-full items-center justify-between gap-2 rounded-md border border-border-default bg-control px-3 py-2 text-sm font-medium text-primary outline-none transition-colors hover:bg-control-hover focus-visible:border-brand-border focus-visible:ring-2 focus-visible:ring-brand-muted data-[state=open]:border-brand-border"
 				>
 					<Select.Value placeholder={ALL_REGIONS_LABEL} />
 					<Select.Icon asChild>
-						<ChevronDown className="size-4 text-quaternary" />
+						<ChevronDown className="size-4 text-quaternary transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] group-data-[state=open]:rotate-180" />
 					</Select.Icon>
 				</Select.Trigger>
 				<Select.Portal>
