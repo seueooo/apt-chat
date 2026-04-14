@@ -96,7 +96,7 @@ export function SliderGroup({
 	onChangeLoanYears,
 }: SliderGroupProps) {
 	return (
-		<div className="flex flex-col gap-7">
+		<div className="flex flex-col gap-4">
 			<SliderRow
 				id="sim-salary"
 				label="연봉"

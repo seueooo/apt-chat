@@ -9,6 +9,7 @@
  * 마운트되어 있는 것을 전제로 한다 — 실제로 부모가 둘 다 렌더함).
  */
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
 type AdvancedSettingsProps = {
@@ -79,7 +80,7 @@ export function AdvancedSettings({
 	const [open, setOpen] = useState<boolean>(false);
 
 	return (
-		<div className="flex flex-col gap-4 border-t border-border-subtle pt-5">
+		<div className="flex flex-col gap-4 border-t border-border-subtle pt-2">
 			<button
 				type="button"
 				onClick={() => setOpen((prev) => !prev)}
@@ -91,9 +92,11 @@ export function AdvancedSettings({
 				<span className="flex items-center gap-3 text-[11px] font-normal normal-case tabular-nums text-quaternary">
 					<span>금리 {interestRate.toFixed(1)}%</span>
 					<span>DSR {dsrLimit}%</span>
-					<span aria-hidden="true" className="text-tertiary">
-						{open ? "▴" : "▾"}
-					</span>
+					{open ? (
+						<ChevronUp aria-hidden="true" className="size-4 text-tertiary" />
+					) : (
+						<ChevronDown aria-hidden="true" className="size-4 text-tertiary" />
+					)}
 				</span>
 			</button>
 			{open ? (
