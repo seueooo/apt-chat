@@ -18,7 +18,7 @@ export function Dashboard({ initialRegions, initialResult }: DashboardProps) {
 	return (
 		<SimulatorStoreProvider initialResult={initialResult}>
 			<div className="flex min-h-screen flex-col p-3 md:h-screen md:flex-row md:p-6">
-				<section className="flex flex-1 flex-col gap-4 p-6 md:min-h-0 md:overflow-y-auto">
+				<section className="flex flex-1 flex-col gap-4 p-2 md:min-h-0 md:overflow-y-auto md:p-3">
 					<div className="flex flex-col gap-1">
 						<h2 className="text-balance text-xl font-semibold tracking-[-0.24px] text-primary">
 							When-to-Buy Apartment Simulator
@@ -32,7 +32,7 @@ export function Dashboard({ initialRegions, initialResult }: DashboardProps) {
 					<AptList />
 				</section>
 
-				<section className="flex flex-1 flex-col md:min-h-0 md:overflow-hidden">
+				<section className="flex flex-1 flex-col p-2 md:min-h-0 md:overflow-hidden md:p-3">
 					<ChatWindow />
 				</section>
 			</div>
