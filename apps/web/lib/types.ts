@@ -1,11 +1,4 @@
-/**
- * apt-chat backend API 타입 정의.
- *
- * 백엔드 FastAPI Pydantic 모델과 1:1 매칭된다. 필드 추가/변경 시 반드시
- * `apps/server/routers/*.py` 와 함께 갱신해야 한다.
- */
-
-// --- /api/simulate -----------------------------------------------------------
+// 백엔드 FastAPI Pydantic 모델과 1:1 매칭. 필드 변경 시 `apps/server/routers/*.py` 와 함께 갱신.
 
 export type SimulateRequest = {
 	salary: number;
@@ -35,8 +28,6 @@ export type SimulateResponse = {
 	apartments: Apartment[];
 };
 
-// --- /api/chat ---------------------------------------------------------------
-
 export type ChatRole = "user" | "assistant";
 
 export type ChatMessage = {
@@ -44,10 +35,7 @@ export type ChatMessage = {
 	content: string;
 };
 
-/**
- * Chat 호출 시 프런트가 백엔드에 전달하는 임의 컨텍스트.
- * (예: 시뮬레이터의 지역/예산 등 — 백엔드는 free-form dict 로 처리)
- */
+// 백엔드는 free-form dict 로 처리 — 시뮬레이터의 region/total_budget 등 임의 필드.
 export type ChatContext = Record<string, unknown>;
 
 export type ChatRequest = {
@@ -64,11 +52,8 @@ export type Visualization = {
 	y: string;
 };
 
-/**
- * ChatResponse.rows 는 백엔드에서 `list[list]` 로 반환되며 각 컬럼의 런타임
- * 타입이 동적으로 결정되므로 `unknown` 으로 둔다. 사용처에서 `columns` 와
- * 함께 narrowing 필요.
- */
+// rows 는 backend 에서 list[list] 로 오며 컬럼 타입이 런타임 결정 → `unknown[][]`.
+// 사용처에서 `columns` 와 함께 narrow 해야 한다.
 export type ChatResponse = {
 	answer: string;
 	sql: string;
@@ -79,8 +64,6 @@ export type ChatResponse = {
 	cache_hit: boolean;
 	remaining_questions: number;
 };
-
-// --- /api/regions & /api/stats -----------------------------------------------
 
 export type Region = {
 	sigungu: string;

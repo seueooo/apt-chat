@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * ContextBadge — 시뮬레이터 연동 컨텍스트 표시 배지.
- *
- * `useChat(context)` 로 전달되는 컨텍스트를 유저에게 시각적으로 알려주는 용도.
- * - 예산(만원 단위) 과 지역을 소문자 캡션으로 표시.
- * - 컨텍스트가 없으면 렌더하지 않음 (null 반환).
- */
-
 import { formatPrice } from "@/utils/format";
 
 export type ContextBadgeProps = {

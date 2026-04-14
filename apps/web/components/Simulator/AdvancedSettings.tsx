@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * AdvancedSettings — 기본 접힌 상태의 "고급 설정" 패널.
- *
- * 본체는 collapse 토글 (`open`) 만 자체 상태로 들고, store 구독은 없다.
- * 헤더 inline 값과 슬라이더는 atomic 자식들이 자기 필드만 selector 로 구독한다.
- */
-
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useSimulatorActions, useSimulatorSelector } from "@/stores/simulator-store";
@@ -63,8 +56,6 @@ function AdvancedSliderRow({
 	);
 }
 
-// --- Atomic header text components -----------------------------------------
-
 function HeaderInterestRate() {
 	const interestRate = useSimulatorSelector((s) => s.interestRate);
 	return <span>금리 {interestRate.toFixed(1)}%</span>;
@@ -74,8 +65,6 @@ function HeaderDsrLimit() {
 	const dsrLimit = useSimulatorSelector((s) => s.dsrLimit);
 	return <span>DSR {dsrLimit}%</span>;
 }
-
-// --- Atomic slider field components ----------------------------------------
 
 function InterestRateField() {
 	const interestRate = useSimulatorSelector((s) => s.interestRate);
@@ -110,8 +99,6 @@ function DsrLimitField() {
 		/>
 	);
 }
-
-// --- Wrapper ---------------------------------------------------------------
 
 export function AdvancedSettings() {
 	const [open, setOpen] = useState<boolean>(false);

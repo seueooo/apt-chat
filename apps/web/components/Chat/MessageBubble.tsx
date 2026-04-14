@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * MessageBubble — user/assistant 메시지 버블의 두 explicit variant.
- *
- * - `UserMessageBubble`: 우측 정렬, 단순 텍스트
- * - `AssistantMessageBubble`: 좌측 정렬, `data` 있으면 visualization/table/SQL/warnings 렌더
- *
- * 분리 이유: 두 케이스가 사실상 별개 컴포넌트(렌더 트리·로컬 state·타입 모두 다름)인데
- * 한 함수 안에서 `if (role === "user")` 로 갈리던 걸 명시 variant 로 풀어냄.
- *
- * raw text 만 렌더 — `dangerouslySetInnerHTML` 금지 (plan 규약).
- */
-
 import { useState } from "react";
 import { ChartDisplay } from "@/components/Chat/ChartDisplay";
 import type { AssistantMessage } from "@/hooks/useChat";

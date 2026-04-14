@@ -1,18 +1,10 @@
 "use client";
 
-/**
- * AptList — 시뮬레이션 결과 매물 리스트.
- *
- * 단순 스크롤 가능한 리스트. 각 행에는 단지명/위치/면적/층/가격/여유금액을
- * 표시한다. `margin` 이 음수면 warning 색으로 표시하여 시각적 경고를 준다.
- * (이론상 backend 가 예산 내 매물만 반환하지만, 방어적 스타일링으로 유지.)
- */
-
 import type { Apartment } from "@/lib/types";
 import { useSimulatorSelector } from "@/stores/simulator-store";
 import { formatPrice, toPyeong } from "@/utils/format";
 
-// 모듈 레벨 stable 빈 배열 — selector 가 매번 새 `[]` 를 반환하면 무한 리렌더.
+// selector fallback 을 매번 새 `[]` 로 반환하면 무한 리렌더 — 모듈 const 로 고정.
 const EMPTY_APARTMENTS: Apartment[] = [];
 
 function apartmentKey(apt: Apartment): string {
@@ -62,8 +54,6 @@ function AptRow({ apt }: { apt: Apartment }) {
 }
 
 export function AptList() {
-	// `result?.apartments` 는 동일 result 객체 안에서는 같은 array reference.
-	// 결과가 없을 때만 모듈 const `EMPTY_APARTMENTS` 로 fallback (selector 안정성).
 	const apartments = useSimulatorSelector((s) => s.result?.apartments ?? EMPTY_APARTMENTS);
 	const loading = useSimulatorSelector((s) => s.loading);
 

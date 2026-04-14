@@ -1,12 +1,6 @@
 "use client";
 
-/**
- * SummaryCards — 시뮬레이션 결과 요약 (최대 대출 / 월 상환액 / 구매 총액).
- *
- * 단위 메모: backend `loan_calculator.py` 기준 `monthly_payment` 는
- * `salary * (dsr_limit/100) / 12` (만원) — `max_loan`, `total_budget` 와
- * 동일한 "만원" 단위이므로 세 필드 모두 `formatPrice()` 를 그대로 사용한다.
- */
+// backend 의 max_loan / monthly_payment / total_budget 는 모두 "만원" 단위 → formatPrice 공용.
 
 import type { SimulateResponse } from "@/lib/types";
 import { useSimulatorSelector } from "@/stores/simulator-store";
@@ -35,8 +29,6 @@ function buildCards(result: SimulateResponse | null): CardSpec[] {
 }
 
 export function SummaryCards() {
-	// result 객체 ref 는 fetch 후에만 변하므로 selector 가 안정적.
-	// loading 도 primitive boolean.
 	const result = useSimulatorSelector((s) => s.result);
 	const loading = useSimulatorSelector((s) => s.loading);
 	const cards = buildCards(result);

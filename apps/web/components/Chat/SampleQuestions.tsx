@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * SampleQuestions — 초기 상태에서 노출되는 5개 예시 질문 버튼.
- *
- * - 메시지가 없을 때만 노출 (상위 ChatWindow 가 제어).
- * - `disabled` 시 전체 버튼 비활성 (세션 소진 시).
- * - 버튼 클릭 → 부모의 `onSelect(content)` 호출 → 부모가 `useChat.send` 호출.
- */
-
 type SampleQuestionsProps = {
 	onSelect: (question: string) => void;
 	disabled?: boolean;

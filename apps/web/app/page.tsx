@@ -6,10 +6,7 @@ import type { Region, SimulateResponse } from "@/lib/types";
 
 const API_BASE = process.env.API_URL || "http://localhost:8000";
 
-/**
- * 서버에서 regions 를 선로드. 빠른 fetch 이므로 page 본문에서 await.
- * 1시간 ISR 로 backend 재호출을 줄이고, 장애 시 `[]` 반환해 graceful degradation.
- */
+// 1시간 ISR. 장애 시 `[]` 반환 → RegionSelector 가 "서울 전체" 단일 옵션으로 degrade.
 async function fetchRegions(): Promise<Region[]> {
 	try {
 		const res = await fetch(`${API_BASE}/api/regions`, {
@@ -23,13 +20,9 @@ async function fetchRegions(): Promise<Region[]> {
 	}
 }
 
-/**
- * 기본 입력값에 대한 simulate 결과를 1시간 캐시한다.
- *
- * - POST 는 Next 기본 fetch cache 대상이 아니므로 `unstable_cache` 로 래핑.
- * - 실패는 **throw** 해 null 이 memoize 되는 걸 방지. 외부 wrapper 에서 catch.
- * - 캐시 키가 default 하나뿐이라 모든 유저가 결과를 공유 → 첫 방문 이후엔 memory lookup.
- */
+// POST 는 Next 기본 fetch cache 대상이 아니라 `unstable_cache` 로 래핑.
+// 실패 시 throw — `unstable_cache` 는 throw 를 memoize 하지 않으므로 다음 요청이 자동 재시도.
+// null 을 return 하면 장애 순간의 null 이 1시간 박제되어 backend 복구 후에도 계속 null 이 나온다.
 const fetchDefaultSimulateCached = unstable_cache(
 	async (): Promise<SimulateResponse> => {
 		const res = await fetch(`${API_BASE}/api/simulate`, {
@@ -63,16 +56,8 @@ export default async function Home() {
 	);
 }
 
-/**
- * Suspense 경계 안의 async Server Component.
- *
- * - 부모 `<Suspense>` 가 fallback Dashboard (loading 상태, skeleton) 을 스트리밍으로
- *   먼저 내보내고, 이 컴포넌트는 simulate fetch 가 끝난 후 resolve 되어 실제 결과를
- *   prop 으로 전달한다.
- * - `useSimulator` 가 prop 을 `initialData` 로 소비해 서버/클라 렌더가 동일한 HTML 을
- *   생성 → hydration mismatch 없음. (HydrationBoundary 는 중첩 QueryClient instance
- *   조합에서 RSC streaming 과 어색하게 얽혀 mismatch 를 유발하므로 의도적으로 피함.)
- */
+// prop 기반 initialResult → 서버/클라 렌더 HTML 구조가 동일 → hydration mismatch 없음.
+// `HydrationBoundary` + dehydrate 는 중첩 QueryClient 와 RSC streaming 이 얽혀 mismatch 발생 → 회피.
 async function DashboardWithPrefetch({ initialRegions }: { initialRegions: Region[] }) {
 	const initialResult = await getDefaultSimulateOrNull();
 	return <Dashboard initialRegions={initialRegions} initialResult={initialResult} />;

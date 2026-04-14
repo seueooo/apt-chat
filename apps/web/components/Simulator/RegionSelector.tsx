@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * RegionSelector — "서울 전체" + `api.regions()` 결과를 Radix Select 로 렌더.
- *
- * - simulator store 의 `region` 만 selector 로 구독한다. region 이 안 바뀌면
- *   이 컴포넌트는 리렌더되지 않으므로 Radix Select 내부의 nested provider 트리
- *   (가장 비싼 자식) 도 매 슬라이더 tick 마다 재렌더되지 않는다.
- * - `initialRegions` 는 `app/page.tsx` Server Component 에서 선로드된 값.
- *   `useQuery` 의 `initialData` 로 주입해 첫 렌더부터 완성된 목록을 노출.
- * - `staleTime: Infinity` — 지역 목록은 세션 내 불변이므로 클라이언트 재요청 금지.
- * - 에러/빈 배열 시 조용히 "서울 전체" 단일 옵션만 노출 (graceful degradation).
- */
-
 import * as Select from "@radix-ui/react-select";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown } from "lucide-react";
@@ -28,8 +16,7 @@ export function RegionSelector({ initialRegions }: RegionSelectorProps) {
 	const region = useSimulatorSelector((s) => s.region);
 	const { setRegion } = useSimulatorActions();
 
-	// 서버가 비어있는 배열을 내려준 경우 (백엔드 장애 등) 는 initialData 를 생략해
-	// 클라이언트 fallback fetch 로 복구 시도하고, 실패 시 isError 로 에러 UI 노출.
+	// 서버가 빈 배열을 내려준 경우 (백엔드 장애) initialData 생략 → 클라 fallback fetch 로 복구 시도.
 	const hasServerData = initialRegions.length > 0;
 	const { data: regions, isError } = useQuery<Region[]>({
 		queryKey: ["regions"],

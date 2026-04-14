@@ -1,23 +1,5 @@
 "use client";
 
-/**
- * ChatWindow — 챗봇 메인 컨테이너.
- *
- * 중요: **시뮬레이터 store 를 구독하지 않는다.** `useSimulatorStoreRef()` 로
- * store reference 만 받아 전송 시점에만 `getSnapshot()` 으로 최신 region/budget
- * 을 읽는다. 덕분에 슬라이더 드래그/debounced result 업데이트 등 시뮬레이터 상태
- * 변화에 ChatWindow 본체는 리렌더되지 않는다.
- *
- * 배지 UI 는 별도 atomic 컴포넌트 `ChatContextBadge` 가 selector 로 자기 slice 만
- * 구독 → 시각적으로는 실시간 반영되면서도 ChatWindow 본체는 정지 상태 유지.
- *
- * - `useChat()` 훅을 통해 메시지 상태 / 낙관적 카운터 / mutation 상태를 가져온다.
- * - 메시지가 없으면 hero + SampleQuestions + ContextBadge 노출.
- * - 있으면 메시지 목록 + 입력창.
- * - 한글 IME: `e.nativeEvent.isComposing` 체크 필수.
- * - 소진(`isExhausted`) 시 입력창/샘플 버튼 모두 disabled + 경고 배너.
- */
-
 import { useRef, useState } from "react";
 import { ContextBadge } from "@/components/Chat/ContextBadge";
 import { AssistantMessageBubble, UserMessageBubble } from "@/components/Chat/MessageBubble";
@@ -39,8 +21,6 @@ function snapshotToContext(snapshot: SimulatorSnapshot): ChatContext {
 }
 
 export function ChatWindow() {
-	// Store reference 만 획득. useContext 기반이라 context value 가 stable 한 동안
-	// (= Provider 의 lifetime 내내) 이 컴포넌트를 리렌더 트리거에 등록하지 않는다.
 	const storeRef = useSimulatorStoreRef();
 
 	const { messages, loading, send, remainingQuestions, isExhausted, error } = useChat();
@@ -53,12 +33,11 @@ export function ChatWindow() {
 		if (!canSend) return;
 		const value = input;
 		setInput("");
-		// 전송 순간 snapshot 을 읽어 최신 context 조립 — 렌더 타임 구독 없이도 정확성 유지.
 		send(value, snapshotToContext(storeRef.getSnapshot()));
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-		// 한글 IME 조합 중 Enter 는 무시 (조합 확정용 Enter 이므로 전송 X)
+		// 한글 IME 조합 중 Enter 는 조합 확정이므로 전송 아님
 		if (event.nativeEvent.isComposing) return;
 		if (event.key === "Enter" && !event.shiftKey) {
 			event.preventDefault();
@@ -102,8 +81,6 @@ export function ChatWindow() {
 	);
 }
 
-// ---- 내부 서브 컴포넌트 ----------------------------------------------------
-
 function Header({ remainingQuestions }: { remainingQuestions: number }) {
 	const warningThreshold = remainingQuestions <= 1;
 	const badgeToneClass = warningThreshold ? "text-warning" : "text-tertiary";
@@ -126,8 +103,6 @@ function Header({ remainingQuestions }: { remainingQuestions: number }) {
 	);
 }
 
-// Atomic subcomponent — simulator store 의 region/totalBudget slice 만 구독한다.
-// 시뮬레이터 값이 바뀌면 **이 작은 뱃지만** 리렌더되며, ChatWindow 본체는 정지 상태.
 function ChatContextBadge() {
 	const region = useSimulatorSelector((s) => s.region);
 	const totalBudget = useSimulatorSelector((s) => s.result?.total_budget);

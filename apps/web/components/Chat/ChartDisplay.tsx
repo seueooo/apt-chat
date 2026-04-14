@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * ChartDisplay — Recharts 기반 라인/바 차트 렌더.
- *
- * - `visualization` prop 의 `type` 에 따라 LineChart / BarChart 선택.
- * - `columns` + `rows` → `{ [colName]: value }[]` 형태의 Recharts data point 배열로 변환.
- * - 색상은 전부 CSS 변수 (`var(--color-*)`) 로 지정 — Tailwind 클래스 미적용 구간만.
- * - SSR 안전성: 부모 트리가 `"use client"` 이므로 기본 Recharts 임포트로 OK.
- */
-
 import {
 	Bar,
 	BarChart,
@@ -30,7 +21,6 @@ type ChartDisplayProps = {
 
 type ChartPoint = Record<string, string | number>;
 
-/** 셀 값을 Recharts 가 그릴 수 있는 string | number 로 정규화. */
 function toCellValue(raw: unknown): string | number {
 	if (typeof raw === "number" && Number.isFinite(raw)) {
 		return raw;

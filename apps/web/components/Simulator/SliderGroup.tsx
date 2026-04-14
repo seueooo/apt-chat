@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * SliderGroup — 연봉/보유 현금/대출기간 세 슬라이더 컨테이너.
- *
- * 본체는 정적 layout 으로, 자체 store 구독이 없다 (mount 후 다시 렌더되지 않음).
- * 각 atomic 컴포넌트 (`SalarySlider` / `SavingsSlider` / `LoanYearsSlider`) 가
- * `useSimulatorSelector` 로 자기 필드만 구독하므로, 한 슬라이더를 드래그하면
- * **그 슬라이더 컴포넌트만** 리렌더된다.
- */
-
 import { useSimulatorActions, useSimulatorSelector } from "@/stores/simulator-store";
 import { formatPrice } from "@/utils/format";
 
@@ -79,8 +70,6 @@ function SliderRow({
 }
 
 const formatYears = (value: number): string => `${value}년`;
-
-// --- Atomic field components ------------------------------------------------
 
 function SalarySlider() {
 	const salary = useSimulatorSelector((s) => s.salary);
