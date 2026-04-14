@@ -1,25 +1,21 @@
 "use client";
 
 /**
- * MessageBubble — user/assistant 메시지 버블 단일 렌더.
+ * MessageBubble — user/assistant 메시지 버블의 두 explicit variant.
  *
- * assistant 메시지에 `data` 가 있으면:
- *  - `visualization` 이 있으면 차트 렌더
- *  - `rows.length <= INLINE_TABLE_LIMIT` 이면 인라인 테이블, 그 이상이면 상위 5행만 표시
- *  - `sql` 은 접이식 mono 블록
- *  - `warnings` 는 warning 색상 목록
+ * - `UserMessageBubble`: 우측 정렬, 단순 텍스트
+ * - `AssistantMessageBubble`: 좌측 정렬, `data` 있으면 visualization/table/SQL/warnings 렌더
+ *
+ * 분리 이유: 두 케이스가 사실상 별개 컴포넌트(렌더 트리·로컬 state·타입 모두 다름)인데
+ * 한 함수 안에서 `if (role === "user")` 로 갈리던 걸 명시 variant 로 풀어냄.
  *
  * raw text 만 렌더 — `dangerouslySetInnerHTML` 금지 (plan 규약).
  */
 
 import { useState } from "react";
 import { ChartDisplay } from "@/components/Chat/ChartDisplay";
-import type { Message } from "@/hooks/useChat";
+import type { AssistantMessage } from "@/hooks/useChat";
 import type { ChatResponse } from "@/lib/types";
-
-type MessageBubbleProps = {
-	message: Message;
-};
 
 const INLINE_TABLE_LIMIT = 20;
 const TRUNCATED_PREVIEW = 5;
@@ -132,17 +128,17 @@ function AssistantData({ data }: { data: ChatResponse }) {
 	);
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
-	if (message.role === "user") {
-		return (
-			<div className="flex justify-end">
-				<div className="max-w-[85%] rounded-lg border border-border-default bg-control-active px-4 py-3 text-sm leading-relaxed text-primary">
-					{message.content}
-				</div>
+export function UserMessageBubble({ content }: { content: string }) {
+	return (
+		<div className="flex justify-end">
+			<div className="max-w-[85%] rounded-lg border border-border-default bg-control-active px-4 py-3 text-sm leading-relaxed text-primary">
+				{content}
 			</div>
-		);
-	}
+		</div>
+	);
+}
 
+export function AssistantMessageBubble({ message }: { message: AssistantMessage }) {
 	return (
 		<div className="flex justify-start">
 			<div className="w-full max-w-[92%] rounded-lg border border-border-subtle bg-panel px-4 py-3">

@@ -12,7 +12,7 @@
 
 import { useRef, useState } from "react";
 import { ContextBadge } from "@/components/Chat/ContextBadge";
-import { MessageBubble } from "@/components/Chat/MessageBubble";
+import { AssistantMessageBubble, UserMessageBubble } from "@/components/Chat/MessageBubble";
 import { SampleQuestions } from "@/components/Chat/SampleQuestions";
 import { type Message, useChat } from "@/hooks/useChat";
 import { getMaxQuestions } from "@/lib/session";
@@ -65,13 +65,11 @@ export function ChatWindow({ context, contextRegion, contextBudget }: ChatWindow
 			/>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-4">
-				<MessageList
-					messages={messages}
-					loading={loading}
-					isEmpty={messages.length === 0}
-					isExhausted={isExhausted}
-					onSampleSelect={handleSampleSelect}
-				/>
+				{messages.length === 0 ? (
+					<EmptyMessageList isExhausted={isExhausted} onSampleSelect={handleSampleSelect} />
+				) : (
+					<PopulatedMessageList messages={messages} loading={loading} />
+				)}
 
 				{error ? <ErrorBanner message={error.message} /> : null}
 				{isExhausted ? <ExhaustedBanner /> : null}
@@ -123,46 +121,45 @@ function Header({
 	);
 }
 
-function MessageList({
-	messages,
-	loading,
-	isEmpty,
+function EmptyMessageList({
 	isExhausted,
 	onSampleSelect,
 }: {
-	messages: Message[];
-	loading: boolean;
-	isEmpty: boolean;
 	isExhausted: boolean;
 	onSampleSelect: (question: string) => void;
 }) {
-	if (isEmpty) {
-		return (
-			<div className="flex min-h-0 flex-1 flex-col justify-between gap-6 rounded-lg border border-border-subtle bg-control p-6">
-				<div className="flex flex-col gap-2">
-					<h3 className="text-balance text-lg font-medium tracking-[-0.24px] text-primary">
-						무엇이 궁금하세요?
-					</h3>
-					<p className="text-pretty text-sm leading-relaxed text-tertiary">
-						자연어로 질문하면 실거래가 데이터에서 바로 답을 찾아 드립니다. 차트와 표가 필요한 질문은
-						자동으로 시각화됩니다.
-					</p>
-				</div>
-				<SampleQuestions onSelect={onSampleSelect} disabled={isExhausted} />
+	return (
+		<div className="flex min-h-0 flex-1 flex-col justify-between gap-6 rounded-lg border border-border-subtle bg-control p-6">
+			<div className="flex flex-col gap-2">
+				<h3 className="text-balance text-lg font-medium tracking-[-0.24px] text-primary">
+					무엇이 궁금하세요?
+				</h3>
+				<p className="text-pretty text-sm leading-relaxed text-tertiary">
+					자연어로 질문하면 실거래가 데이터에서 바로 답을 찾아 드립니다. 차트와 표가 필요한 질문은
+					자동으로 시각화됩니다.
+				</p>
 			</div>
-		);
-	}
+			<SampleQuestions onSelect={onSampleSelect} disabled={isExhausted} />
+		</div>
+	);
+}
 
+function PopulatedMessageList({ messages, loading }: { messages: Message[]; loading: boolean }) {
 	return (
 		<div
 			className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-lg border border-border-subtle bg-control p-4"
 			aria-busy={loading}
 			aria-live="polite"
 		>
-			{messages.map((msg, idx) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: messages append-only, index stable per session
-				<MessageBubble key={`msg-${idx}`} message={msg} />
-			))}
+			{messages.map((msg, idx) =>
+				msg.role === "user" ? (
+					// biome-ignore lint/suspicious/noArrayIndexKey: messages append-only, index stable per session
+					<UserMessageBubble key={`msg-${idx}`} content={msg.content} />
+				) : (
+					// biome-ignore lint/suspicious/noArrayIndexKey: messages append-only, index stable per session
+					<AssistantMessageBubble key={`msg-${idx}`} message={msg} />
+				),
+			)}
 			{loading ? <TypingIndicator /> : null}
 		</div>
 	);

@@ -23,11 +23,18 @@ import { ApiError, api } from "@/lib/api";
 import { getMaxQuestions, getOrCreateSessionId } from "@/lib/session";
 import type { ChatContext, ChatMessage, ChatResponse } from "@/lib/types";
 
-export type Message = {
-	role: "user" | "assistant";
+export type UserMessage = {
+	role: "user";
+	content: string;
+};
+
+export type AssistantMessage = {
+	role: "assistant";
 	content: string;
 	data?: ChatResponse;
 };
+
+export type Message = UserMessage | AssistantMessage;
 
 export type UseChatResult = {
 	messages: Message[];
