@@ -10,6 +10,13 @@
 
 import type { SimulateRequest } from "@/lib/types";
 
+/**
+ * "전 지역" sentinel. simulator state 의 `region` 기본값이자 RegionSelector 의
+ * placeholder/첫 옵션 라벨로 양쪽이 동시에 사용해야 한다 — 불일치 시 controlled
+ * Select 가 빈 상태로 보이므로 단일 상수로 묶는다.
+ */
+export const ALL_REGIONS_LABEL = "서울 전체";
+
 export type SimulatorState = {
 	salary: number;
 	savings: number;
@@ -23,7 +30,7 @@ export const DEFAULT_SIMULATOR_STATE: SimulatorState = {
 	salary: 5000,
 	savings: 10000,
 	loanYears: 30,
-	region: "서울 전체",
+	region: ALL_REGIONS_LABEL,
 	interestRate: 3.9,
 	dsrLimit: 40,
 };
