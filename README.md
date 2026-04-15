@@ -33,10 +33,10 @@ AI native 방식으로 제작한 서비스입니다. 설계·파이프라인 구
 apt-chat/
 ├── .claude/
 │   └── skills/
-│       └── apt-chat-exec/
+│       └── apt-chat-exec/              # 기능 구현 스킬
 │           ├── SKILL.md                # 오케스트레이터 — Phase 0~4, 모델 라우팅, 에러 처리
 │           ├── server-implementer.md   # BE 워커 role — supabase-pg-bestpractice, TDD, 의존성 단방향
-│           ├── web-implementer.md      # FE 워커 role — vercel-react-bestpractice, DESIGN.md 토큰 전용
+│           ├── web-implementer.md      # FE 워커 role — vercel-react-bestpractice, DESIGN.md 토큰 적용
 │           └── verifier.md             # 검증 워커 role — ruff/pytest/biome/tsc raw output 강제
 │
 └── docs/
