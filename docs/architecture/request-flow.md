@@ -2,7 +2,7 @@
 
 ## Overview
 
-브라우저는 Next.js 16의 App Router 프록시(`apps/web/app/api/[...path]/route.ts`)를 통해 FastAPI 백엔드와 통신한다. Anthropic SDK 호출과 Supabase(PostgreSQL) 연결은 모두 FastAPI 안에서만 일어나며, 클라이언트 번들에는 API 키가 포함되지 않는다. 시뮬레이터는 순수 계산 + DB 조회 경로, 챗봇은 캐시 → 2단계 Claude → sqlglot 검증 → DB 실행 경로를 따른다.
+브라우저는 Next.js 16의 App Router 프록시(`apps/web/app/api/[...path]/route.ts`)를 통해 FastAPI 백엔드와 통신한다. Anthropic SDK 호출과 Supabase(PostgreSQL) 연결은 모두 FastAPI 안에서만 일어나며, 클라이언트 번들에는 API 키가 포함되지 않는다. 시뮬레이터는 순수 계산 + DB 조회로 끝나고, 챗봇은 캐시 → 2단계 Claude → sqlglot 검증 → DB 실행을 거친다.
 
 ## 전체 아키텍처
 
@@ -169,13 +169,13 @@ flowchart TD
     Warn --> OK
 ```
 
-| 상태 | 조건 |
-| --- | --- |
-| 400 | `X-Session-Id` 누락, `validate_sql` 실패, intent 필수 파라미터 누락, 미지원 intent |
-| 429 | `rate_limit.check_and_increment` 초과 (세션당 3회) |
-| 500 | `anthropic.APIError` (Claude 호출 실패) |
-| 504 | `psycopg.errors.QueryCanceled` (statement_timeout 10초) |
-| 200 + warnings | `OperationalError` / `PoolTimeout` (결과 비고, 캐시 저장 스킵) |
+| 상태           | 조건                                                                               |
+| -------------- | ---------------------------------------------------------------------------------- |
+| 400            | `X-Session-Id` 누락, `validate_sql` 실패, intent 필수 파라미터 누락, 미지원 intent |
+| 429            | `rate_limit.check_and_increment` 초과 (세션당 3회)                                 |
+| 500            | `anthropic.APIError` (Claude 호출 실패)                                            |
+| 504            | `psycopg.errors.QueryCanceled` (statement_timeout 10초)                            |
+| 200 + warnings | `OperationalError` / `PoolTimeout` (결과 비고, 캐시 저장 스킵)                     |
 
 ## 비용 제어 포인트
 

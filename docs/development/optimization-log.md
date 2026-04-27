@@ -150,7 +150,7 @@ export function ChatWindow() {
 
 - 드래그 중 리렌더 **1개 컴포넌트** (`SalarySlider`) 로 축소. Radix Select Provider 트리는 0회 재평가.
 - Debounce 로 `api.simulate` 는 슬라이더 놓고 300ms 후 1회 → `SummaryCards` / `AptList` 가 그때 한 번만 갱신.
-- Chat 파이프라인은 시뮬레이터 변화와 완전히 분리. 시뮬레이터 드래그 중 `ChatWindow` 의 textarea 상태는 리렌더 없이 유지됨.
+- Chat 파이프라인은 시뮬레이터 변화와 분리된다. 시뮬레이터 드래그 중 `ChatWindow` 의 textarea 상태는 리렌더 없이 유지됨.
 
 ### 함정
 
@@ -194,15 +194,15 @@ const apartments = useSimulatorSelector(
 
 ### 원인
 
-`useSimulator` 가 전적으로 클라이언트 사이드에서 동작했다.
+`useSimulator` 가 전부 클라이언트에서 돌았다.
 
 1. 페이지 HTML 은 skeleton 상태로 SSR
 2. 브라우저가 JS 를 내려받고 hydrate
 3. `useState` + `useEffect` 로 `debounced` 상태가 300ms 후에야 실제 값으로 갱신
-4. React Query 가 그제서야 POST `/api/simulate` 발사
+4. React Query 가 그제서야 POST `/api/simulate` 를 날린다
 5. Backend 가 응답 (700ms)
 
-이 전체 시퀀스가 **직렬**이라 각 단계가 쌓였다.
+이 시퀀스가 직렬이라 단계마다 지연이 쌓였다.
 
 ### 기존 방식
 
@@ -289,7 +289,7 @@ export function useSimulator(initialResult?: SimulateResponse | null) {
 
 - **Cold** (cache 비어있을 때 첫 요청): TTFB ~530ms, 실제 simulate 결과가 HTML 에 렌더된 채로 도착
 - **Warm** (1시간 내 재방문): TTFB ~70ms, backend 호출 **0회** (`unstable_cache` 히트)
-- Skeleton flash 완전히 사라짐. 첫 페인트부터 완성된 값 노출.
+- Skeleton flash 사라짐. 첫 페인트부터 실제 결과가 박혀 나온다.
 
 ### 함정
 
@@ -313,9 +313,9 @@ export function useSimulator(initialResult?: SimulateResponse | null) {
       <span>—</span>               ← 서버
 ```
 
-**원인**: `components/providers.tsx` 가 `useState(() => new QueryClient())` 로 context client 를 생성하는데, `DashboardWithPrefetch` 가 별도의 로컬 `QueryClient` 로 prefetch → dehydrate 한다. React 19 + RSC streaming 타이밍상 서버 렌더 시점에는 dehydrated state 가 context client 로 동기 주입되지 못해, 서버는 loading 상태로 HTML 을 찍고 클라이언트는 hydration 후 데이터로 렌더한다.
+**원인**: `components/providers.tsx` 가 `useState(() => new QueryClient())` 로 context client 를 생성하는데, `DashboardWithPrefetch` 가 별도의 로컬 `QueryClient` 로 prefetch → dehydrate 한다. React 19 + RSC streaming 환경에서는 서버 렌더 타이밍에 dehydrated state 가 context client 로 제때 못 들어가서, 서버는 loading 상태로 HTML 을 찍고 클라이언트는 hydration 후 데이터로 렌더한다.
 
-**해결**: `HydrationBoundary` 를 버리고 **prop 기반 `initialData`** 로 전환. 서버와 클라이언트가 같은 prop 을 받아 `useQuery` 에 주입하므로 양쪽 렌더 결과가 구조적으로 동일 → mismatch 없음. (코드는 위 "수정 방식" 참고.)
+**해결**: `HydrationBoundary` 를 버리고 **prop 기반 `initialData`** 로 전환. 서버와 클라이언트가 같은 prop 을 받아 `useQuery` 에 넣으니, 양쪽 렌더 결과가 구조적으로 같음 → mismatch 없음. (코드는 위 "수정 방식" 참고.)
 
 ---
 
@@ -352,7 +352,7 @@ export function RegionSelector({ value, onChange }) {
 
 1. `app/page.tsx` 에서 backend `/api/regions` 직접 fetch (`next: { revalidate: 3600 }`). 프록시를 거치지 않고 서버→서버 호출.
 2. 결과를 `initialRegions` prop 으로 `Dashboard` → `RegionSelector` 에 drill.
-3. `RegionSelector` 는 `initialRegions.length > 0` 일 때만 `useQuery` 의 `initialData` 로 주입. 서버 결과가 빈 배열이면 클라 쿼리가 fallback 으로 복구 시도 → graceful degradation 유지.
+3. `RegionSelector` 는 `initialRegions.length > 0` 일 때만 `useQuery` 의 `initialData` 로 주입. 서버 결과가 빈 배열이면 클라 쿼리가 fallback 으로 복구를 시도하도록 (graceful degradation).
 
 ```tsx
 // app/page.tsx
@@ -388,61 +388,3 @@ export function RegionSelector({ value, onChange, initialRegions }) {
 - Backend 장애 시 `[]` fallback → 클라 쿼리가 재시도 → 에러 UI.
 
 ---
-
-## 2026-04-14 — Chat 첫 메시지: `sessionId` hydration waterfall 제거
-
-### 문제
-
-`useChat` 훅이 `useState("") + useEffect(() => getOrCreateSessionId())` 로 session id 를 로드. 사용자가 hydration 직후 바로 메시지를 보내면 **빈 문자열 sessionId** 로 backend 에 전송될 가능성이 있었다. 사용자가 타이핑하는 시간이 길어 실전에서는 거의 노출되지 않았지만, 경쟁 조건 자체가 존재.
-
-### 원인
-
-SSR 호환을 위해 초기 state 를 `""` 로 두고, `useEffect` 로 hydration 후 실제 값을 로드하는 패턴. 그 사이에 첫 send 가 trigger 되면 stale closure 가 빈 문자열을 그대로 보낸다.
-
-### 기존 방식
-
-```tsx
-// hooks/useChat.ts
-export function useChat() {
-  const [sessionId, setSessionId] = useState<string>("");
-  // ...
-
-  useEffect(() => {
-    setSessionId(getOrCreateSessionId());
-  }, []);
-
-  const mutation = useMutation({
-    mutationFn: (content: string) => {
-      return api.chat({ sessionId, messages, ... }); // ← stale "" 가능
-    },
-    // ...
-  });
-}
-```
-
-### 수정 방식
-
-`useState` + `useEffect` 전부 제거. `getOrCreateSessionId()` 를 `mutationFn` 내부에서 **lazy 호출**. Mutation 은 사용자 action (버튼 클릭/Enter) 이후에만 실행되므로 이미 브라우저 컨텍스트가 보장되어 있다.
-
-```tsx
-// hooks/useChat.ts
-export function useChat() {
-  // sessionId state 삭제
-  // ...
-  const mutation = useMutation({
-    mutationFn: (content: string) => {
-      return api.chat({
-        sessionId: getOrCreateSessionId(), // ← lazy, 항상 fresh
-        messages,
-        ...
-      });
-    },
-    // ...
-  });
-}
-```
-
-### 결과
-
-- 경쟁 조건 제거.
-- 한 개의 `useState` 와 `useEffect` 삭제 → 렌더 사이클 1회 감소.

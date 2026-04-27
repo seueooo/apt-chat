@@ -30,11 +30,13 @@ Accepted — 2026-04
 ## Consequences
 
 **이점**
+
 - 요청당 LLM 호출 상한이 명확하다 — 캐시 히트 0회, intent 매칭 1~2회, fallback 2~3회.
 - sqlglot AST 검증으로 injection, 허가되지 않은 테이블, DELETE/UPDATE를 결정론적으로 차단.
-- 필수 의존성은 `anthropic`, `sqlglot`, `psycopg` 수준으로 최소화된다.
+- 필수 의존성은 `anthropic`, `sqlglot`, `psycopg` 셋이다.
 
 **단점 / 트레이드오프**
+
 - intent allowlist를 확장할 때마다 `intent_mapper`, `_intent_params`, 테스트를 함께 고쳐야 한다.
 - 키워드 기반 schema retrieval이라 모호한 질의("비싼 거 보여줘")는 fallback(Sonnet) 경로로 빠진다.
 - LangChain `SQLDatabaseChain` 등이 제공하는 체인 조합/자가 치유 기능은 포기한다.
