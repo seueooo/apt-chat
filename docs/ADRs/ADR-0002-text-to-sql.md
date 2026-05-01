@@ -26,6 +26,11 @@ Accepted — 2026-04
   - `MAX_JOINS = 3`, `MAX_SUBQUERY_DEPTH = 2`, `MAX_LIMIT = 100` (미지정 시 100으로 주입)
 - **재시도 금지**: `validate_sql` 실패 → HTTP 400 즉시. `anthropic.APIError` → HTTP 500 즉시. `psycopg.errors.QueryCanceled` → HTTP 504.
 - **캐시 + rate limit**: `services/query_cache` TTLCache(1000, 24h) + Lock, `services/rate_limit` 세션당 3회 + Lock. 템플릿 경로도 `validate_sql`을 한 번 더 통과시킨다.
+- **시뮬레이터 컨텍스트 주입**: `ChatRequest.context`(`{region?, total_budget?}`)는 `agent/prompts.format_context_hint`가 시스템 프롬프트의 보조 섹션으로 변환해 Step 1·Step 2 프롬프트에 부착한다.
+  - **soft default 모델**: 질문에 명시되지 않은 값의 기본값으로만 작용. 사용자 질문에 지역·조건이 명시되면 컨텍스트보다 우선.
+  - region 슬롯은 LLM이 채우지 못한 경우 `_apply_context_defaults`가 결정론적으로 보충한다 (덮어쓰기 금지).
+  - total_budget은 LLM에 정보로만 노출. 시세·추이 등 분석성 질의에 자동 가격 필터로 끼지 않도록 프롬프트에 명시.
+  - Step 3(`generate_answer`)에는 컨텍스트를 주입하지 않는다 (요약 단계의 토큰 비용/노이즈 회피).
 
 ## Consequences
 

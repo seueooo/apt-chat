@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## 챗봇 플로우
 
-챗봇은 세션 ID 검증 → rate limit → 캐시 → intent 추출 → (템플릿 또는 SQL 생성) → sqlglot 검증 → DB 실행 → 요약 생성 → 캐시 저장 순서로 동작한다. 캐시 히트는 LLM 호출을 0회로 만들고, intent 매칭은 Sonnet 호출을 생략한다.
+챗봇은 세션 ID 검증 → rate limit → 캐시 → intent 추출 → (템플릿 또는 SQL 생성) → sqlglot 검증 → DB 실행 → 요약 생성 → 캐시 저장 순서로 동작한다. 캐시 히트는 LLM 호출을 0회로 만들고, intent 매칭은 Sonnet 호출을 생략한다. intent 추출과 SQL 생성 단계의 시스템 프롬프트에는 시뮬레이터 컨텍스트(시군구·총예산)가 "질문에 명시되지 않은 값의 기본값" 섹션으로 부착된다.
 
 ```mermaid
 sequenceDiagram

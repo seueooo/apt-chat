@@ -28,7 +28,7 @@ from typing import Any
 from anthropic import Anthropic
 
 from agent.intent_mapper import SUPPORTED_INTENTS
-from agent.prompts import build_system_prompt
+from agent.prompts import build_system_prompt, format_context_hint
 from agent.schema_retrieval import retrieve_relevant_schema
 from agent.validators import validate_sql
 from config import settings
@@ -120,6 +120,20 @@ def _coerce_schema(raw: Any) -> dict[str, list[str]] | None:
     return result or None
 
 
+def _apply_context_defaults(intent: dict | None, context: dict | None) -> dict | None:
+    """LLM이 채우지 못한 intent 슬롯을 시뮬레이터 컨텍스트로 보충.
+
+    Q1 결정 — 사용자 명시값(LLM이 추출한 값)이 있으면 절대 덮어쓰지 않는다.
+    region(시군구)만 결정론적으로 보충하고, total_budget은 LLM 판단에 맡긴다 (Q2).
+    """
+    if intent is None or not context:
+        return intent
+    region = context.get("region")
+    if isinstance(region, str) and region.strip() and intent.get("region") is None:
+        intent["region"] = region.strip()
+    return intent
+
+
 # --- Step 1 -------------------------------------------------------------------
 
 _STEP1_SYSTEM_PROMPT = """\
@@ -158,7 +172,9 @@ def extract_intent_and_tables(
 
     Args:
         messages: Chat 턴 목록. 마지막 user 메시지 기준으로 분석.
-        context: 향후 확장용 컨텍스트 (현재 미사용이지만 시그니처 고정).
+        context: 시뮬레이터 컨텍스트 (`{region?, total_budget?}`).
+            시스템 프롬프트의 보조 섹션으로 부착되며, intent의 region 슬롯이 비어 있으면
+            컨텍스트의 region으로 결정론적으로 보충한다 (질문에 명시된 값은 절대 덮어쓰지 않음).
 
     Returns:
         (intent, retrieved_schema) 튜플.
@@ -168,14 +184,14 @@ def extract_intent_and_tables(
     Raises:
         anthropic.APIError 계열: API 오류 시 원본 예외를 그대로 전파. 재호출 금지.
     """
-    _ = context  # 현재 미사용 (시그니처 유지용)
     last_question = _last_user_message(messages)
+    system_prompt = _STEP1_SYSTEM_PROMPT + format_context_hint(context)
 
     client = _get_client()
     response = client.messages.create(
         model=settings.anthropic_model_cheap,
         max_tokens=512,
-        system=_STEP1_SYSTEM_PROMPT,
+        system=system_prompt,
         messages=[{"role": "user", "content": last_question or ""}],
     )
     raw_text = response.content[0].text if response.content else ""
@@ -191,6 +207,8 @@ def extract_intent_and_tables(
     if isinstance(parsed, dict):
         intent = _coerce_intent(parsed.get("intent"))
         llm_schema = _coerce_schema(parsed.get("tables"))
+
+    intent = _apply_context_defaults(intent, context)
 
     if llm_schema is None:
         llm_schema = retrieve_relevant_schema(last_question)
@@ -210,7 +228,8 @@ def text_to_sql(
 
     Args:
         messages: Chat 턴 목록. 최근 `_MAX_HISTORY_TURNS` 턴만 LLM에 전달.
-        context: 향후 확장용 컨텍스트 (현재 미사용).
+        context: 시뮬레이터 컨텍스트 (`{region?, total_budget?}`).
+            `build_system_prompt`로 전달돼 시스템 프롬프트의 보조 섹션으로 부착된다.
         retrieved_schema: Step 1에서 추출한 `{table: [columns]}`.
             이 스키마만 프롬프트에 주입되며, 전체 카탈로그는 박제되지 않는다.
 
@@ -221,8 +240,7 @@ def text_to_sql(
         ValueError: LLM 응답이 validate_sql을 통과하지 못할 때. **재호출 금지 — 즉시 전파.**
         anthropic.APIError 계열: API 오류 시 원본 예외 전파.
     """
-    _ = context
-    system_prompt = build_system_prompt(retrieved_schema)
+    system_prompt = build_system_prompt(retrieved_schema, context=context)
     recent = _slice_recent_messages(messages)
     payload_messages = [
         {"role": m.get("role", "user"), "content": m.get("content", "")}

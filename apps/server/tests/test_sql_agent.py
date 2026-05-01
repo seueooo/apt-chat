@@ -151,6 +151,84 @@ def test_text_to_sql_strips_generic_codeblock(mock_client):
     assert "```" not in sql
 
 
+# --- 시뮬레이터 컨텍스트 주입 -------------------------------------------------
+
+
+def test_extract_intent_injects_context_into_system_prompt(mock_client):
+    """context가 주어지면 Step 1 시스템 프롬프트의 보조 섹션에 region/total_budget이 노출된다."""
+    mock_client.messages.create.return_value = _mock_response(
+        '{"intent": null, "tables": {"sales_transactions": ["deal_date"]}}'
+    )
+
+    messages = [{"role": "user", "content": "최근 거래 보여줘"}]
+    sql_agent.extract_intent_and_tables(messages, {"region": "강남구", "total_budget": 50000})
+
+    _, kwargs = mock_client.messages.create.call_args
+    system_prompt = kwargs["system"]
+    assert "강남구" in system_prompt
+    assert "50000" in system_prompt
+    assert "사용자 컨텍스트" in system_prompt
+
+
+def test_extract_intent_fills_region_from_context_when_missing(mock_client):
+    """LLM이 intent.region을 null로 두면 컨텍스트의 region으로 결정론적으로 보충."""
+    mock_client.messages.create.return_value = _mock_response(
+        '{"intent": {"type": "recent_transactions", "region": null}, '
+        '"tables": {"sales_transactions": ["deal_date"]}}'
+    )
+
+    messages = [{"role": "user", "content": "최근 거래 보여줘"}]
+    intent, _schema = sql_agent.extract_intent_and_tables(messages, {"region": "송파구"})
+
+    assert intent is not None
+    assert intent["region"] == "송파구"
+
+
+def test_extract_intent_does_not_override_user_specified_region(mock_client):
+    """LLM이 intent.region을 채워서 보내면 컨텍스트가 덮어쓰지 않는다 (질문 명시값 우선)."""
+    mock_client.messages.create.return_value = _mock_response(
+        '{"intent": {"type": "recent_transactions", "region": "마포구"}, '
+        '"tables": {"sales_transactions": ["deal_date"]}}'
+    )
+
+    messages = [{"role": "user", "content": "마포구 최근 거래"}]
+    intent, _schema = sql_agent.extract_intent_and_tables(messages, {"region": "강남구"})
+
+    assert intent is not None
+    assert intent["region"] == "마포구"
+
+
+def test_extract_intent_no_context_keeps_prompt_unchanged(mock_client):
+    """context=None이면 시스템 프롬프트에 컨텍스트 섹션이 들어가지 않는다."""
+    mock_client.messages.create.return_value = _mock_response(
+        '{"intent": null, "tables": {"sales_transactions": ["deal_date"]}}'
+    )
+
+    sql_agent.extract_intent_and_tables([{"role": "user", "content": "아무 질문"}], None)
+
+    _, kwargs = mock_client.messages.create.call_args
+    assert "사용자 컨텍스트" not in kwargs["system"]
+
+
+def test_text_to_sql_injects_context_into_system_prompt(mock_client):
+    """Step 2 시스템 프롬프트에도 컨텍스트가 주입된다."""
+    mock_client.messages.create.return_value = _mock_response(
+        "SELECT deal_date, price FROM sales_transactions WHERE is_canceled = FALSE LIMIT 10"
+    )
+
+    retrieved_schema = {"sales_transactions": ["deal_date", "price", "is_canceled"]}
+    sql_agent.text_to_sql(
+        [{"role": "user", "content": "최근 거래"}],
+        {"region": "서초구", "total_budget": 70000},
+        retrieved_schema,
+    )
+
+    _, kwargs = mock_client.messages.create.call_args
+    system_prompt = kwargs["system"]
+    assert "서초구" in system_prompt
+    assert "70000" in system_prompt
+
+
 def test_sql_agent_no_retry(mock_client):
     """validate_sql이 ValueError raise 시 LLM 재호출 없이 즉시 전파.
 

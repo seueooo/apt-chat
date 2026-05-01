@@ -2,6 +2,10 @@
 
 정적 규칙과 few-shot 예제는 상수로 유지하고, 허용 테이블/컬럼은 retrieved_schema에서
 주입한다. 전체 스키마 박제 금지.
+
+시뮬레이터 컨텍스트(`{region, total_budget}`)는 `format_context_hint`가 별도 섹션으로
+변환해 시스템 프롬프트 말미에 부착한다. 질문에 명시되지 않은 값의 기본값으로만 작용하며,
+사용자가 질문에 명시한 값이 있으면 컨텍스트보다 우선한다는 규칙을 함께 명시한다.
 """
 
 from agent.schema_retrieval import SCHEMA_CATALOG
@@ -92,6 +96,43 @@ A: WITH monthly AS (
 """
 
 
+def format_context_hint(context: dict | None) -> str:
+    """시뮬레이터 컨텍스트를 LLM 시스템 프롬프트 보조 섹션으로 변환.
+
+    Args:
+        context: ChatRequest.context. shape는 `{region?: str, total_budget?: int}` (만원 단위).
+
+    Returns:
+        시스템 프롬프트 끝에 부착할 섹션 문자열, 또는 컨텍스트가 비어 있으면 빈 문자열.
+
+    Notes:
+        - region은 사용자가 시뮬레이터에서 선택한 시군구이며, 질문에 지역이 명시되지 않은
+          경우의 기본값으로만 사용되도록 모델에 알린다.
+        - total_budget은 정보로만 노출하고 사용 여부는 LLM 판단에 맡긴다 (시세/추이 같은
+          분석 질의에는 적용하지 않도록 명시).
+    """
+    if not context:
+        return ""
+    parts: list[str] = []
+    region = context.get("region")
+    if isinstance(region, str) and region.strip():
+        parts.append(f"- 사용자가 시뮬레이터에서 보고 있는 시군구: {region.strip()}")
+    total_budget = context.get("total_budget")
+    if isinstance(total_budget, (int, float)) and total_budget > 0:
+        parts.append(
+            f"- 사용자의 총예산 상한(만원): {int(total_budget)} "
+            "(사용자가 예산을 명시한 질문에서만 가격 필터로 사용. "
+            "시세/추이 등 분석성 질의에는 적용하지 말 것.)"
+        )
+    if not parts:
+        return ""
+    return (
+        "\n# 사용자 컨텍스트 (질문에 명시되지 않은 값의 기본값)\n"
+        + "\n".join(parts)
+        + "\n주의: 질문에 명시된 지역·조건은 항상 컨텍스트보다 우선합니다.\n"
+    )
+
+
 def _format_schema_section(retrieved_schema: dict[str, list[str]]) -> str:
     """retrieved_schema에 포함된 테이블/컬럼만 나열.
 
@@ -113,22 +154,29 @@ def _format_schema_section(retrieved_schema: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
-def build_system_prompt(retrieved_schema: dict[str, list[str]]) -> str:
+def build_system_prompt(
+    retrieved_schema: dict[str, list[str]],
+    context: dict | None = None,
+) -> str:
     """Text-to-SQL 시스템 프롬프트 빌드.
 
     Args:
         retrieved_schema: schema_retrieval.retrieve_relevant_schema() 결과.
             {테이블: [컬럼]} 형태. 여기 포함된 컬럼만 동적 스키마 섹션에 나열됨.
+        context: 선택적 시뮬레이터 컨텍스트 (`{region?, total_budget?}`).
+            None이거나 비어 있으면 컨텍스트 섹션을 생략한다.
 
     Returns:
-        시스템 프롬프트 문자열. 정적 규칙 + 동적 스키마 + few-shot 예제 포함.
+        시스템 프롬프트 문자열. 정적 규칙 + 동적 스키마 + (선택) 컨텍스트 + few-shot 예제 포함.
     """
     schema_section = _format_schema_section(retrieved_schema)
+    context_section = format_context_hint(context)
     return (
         f"{_STATIC_RULES}\n"
         f"# Available Schema\n"
         f"Only the following tables and columns are available. Do NOT reference any\n"
         f"table or column not listed here.\n\n"
         f"{schema_section}\n"
+        f"{context_section}"
         f"{_FEW_SHOTS}"
     )
